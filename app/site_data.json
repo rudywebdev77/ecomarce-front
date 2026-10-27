@@ -1,0 +1,656 @@
+{
+  "storeInfo": {
+    "name": "Sillhouete",
+    "logo": "https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png?v=1744702089&width=220",
+    "phone": "+92 331 0397865",
+    "whatsapp": "+923310397865",
+    "email": "info@sillhouete.com",
+    "currency": "PKR",
+    "currencySymbol": "Rs."
+  },
+  "announcements": [
+    "Free shipping all over world on $500 and above orders",
+    "We offer worldwide shipping.",
+    "For Bookings: 03154204981 / 03310397865"
+  ],
+  "navigation": [
+    {
+      "text": "Sale",
+      "href": "/collections/sale-1",
+      "isSale": true,
+      "isDropdown": false
+    },
+    {
+      "text": "Maahi II Luxury Eid Pret",
+      "href": "/collections/maahi-ii-luxury-eid-pret",
+      "isDropdown": false
+    },
+    {
+      "text": "New Arrivals",
+      "href": "/collections/new-arrivals",
+      "isDropdown": true,
+      "subItems": [
+        { "text": "Maahi II Luxury Eid Pret", "href": "/collections/maahi-ii-luxury-eid-pret" },
+        { "text": "Silk Solids'26", "href": "/collections/silk-solids26" },
+        { "text": "Raha Eid Pret'26", "href": "/collections/raha-eid-pret26" },
+        { "text": "Lumiere Luxury Formals'26", "href": "/collections/lumiere-luxury-formals26" }
+      ]
+    },
+    {
+      "text": "Bridals",
+      "href": "/collections/bridal-dresses",
+      "isDropdown": true,
+      "subItems": [
+        { "text": "Husan ara - Birdal '25", "href": "/collections/husan-ara-birdal-25" },
+        { "text": "Anarkali - Birdal '24", "href": "/collections/anarkali-birdal-24" },
+        { "text": "Noor Jahn Bridal '23", "href": "/collections/noor-jahn-bridal-23" },
+        { "text": "Roshanara Bridal '22", "href": "/collections/roshanara-bridal-22" }
+      ]
+    },
+    {
+      "text": "Formal",
+      "href": "/collections/formal-dresses",
+      "isDropdown": true,
+      "subItems": [
+        { "text": "Lumiere Luxury Formals'26", "href": "/collections/lumiere-luxury-formals26" },
+        { "text": "Meeras", "href": "/collections/meeras" },
+        { "text": "Zarqaa", "href": "/collections/zarqaa" },
+        { "text": "Riwaj Formals", "href": "/collections/riwaj-formals" },
+        { "text": "Rang e Bahar", "href": "/collections/rang-e-bahar" },
+        { "text": "Tosha Kinari", "href": "/collections/tosha-kinari" },
+        { "text": "Shawl Collection", "href": "/collections/luxury-shawl" },
+        { "text": "View All", "href": "/collections/formal-dresses" }
+      ]
+    },
+    {
+      "text": "Luxury Pret",
+      "href": "/collections/luxury-pret",
+      "isDropdown": true,
+      "subItems": [
+        { "text": "Maahi II Luxury Eid Pret", "href": "/collections/maahi-ii-luxury-eid-pret" },
+        { "text": "Silk Solids'26", "href": "/collections/silk-solids26" },
+        { "text": "Maahi Luxury Pret'25", "href": "/collections/maahi-luxury-pret25" },
+        { "text": "Luxe", "href": "/collections/luxe-1" },
+        { "text": "Opal", "href": "/collections/opal" },
+        { "text": "Riwaj Luxury Pret", "href": "/collections/riwaj-luxury-pret" }
+      ]
+    },
+    {
+      "text": "Pret",
+      "href": "/collections/pret",
+      "isDropdown": true,
+      "subItems": [
+        { "text": "Raha Eid Pret'26", "href": "/collections/raha-eid-pret26" }
+      ]
+    },
+    {
+      "text": "Shop By Events",
+      "href": "#",
+      "isDropdown": true,
+      "subItems": [
+        { "text": "Engagement", "href": "/collections/engagement-dresses" },
+        { "text": "Mehndi", "href": "/collections/mehndi-dresses" },
+        { "text": "Nikkah", "href": "/collections/nikkah-dresses" },
+        { "text": "Barat", "href": "/collections/barat-dresses" },
+        { "text": "Walima", "href": "/collections/walima-dresses" }
+      ]
+    },
+    {
+      "text": "Best Sellers",
+      "href": "/collections/best-sellers",
+      "isDropdown": false
+    },
+    {
+      "text": "Spotted",
+      "href": "/pages/spot",
+      "isDropdown": false
+    },
+    {
+      "text": "Accessories",
+      "href": "/collections/accessories",
+      "isDropdown": true,
+      "subItems": [
+        { "text": "Pouches & Clutches", "href": "/collections/pouches-clutches" }
+      ]
+    }
+  ],
+  "heroSlides": [
+    {
+      "id": 1,
+      "desktopImage": "https://sillhouete.com/cdn/shop/files/web-banner_jpg.jpg?v=1778078549&width=2400",
+      "mobileImage": "https://sillhouete.com/cdn/shop/files/wb-mbl.jpg_1.jpg?v=1778078547&width=1080",
+      "link": "/collections/lumiere-luxury-formals26",
+      "alt": "Lumiere Luxury Formals 26"
+    },
+    {
+      "id": 2,
+      "desktopImage": "https://sillhouete.com/cdn/shop/files/wb-1.jpg?v=1777274033&width=2400",
+      "mobileImage": "https://sillhouete.com/cdn/shop/files/wb-mbl.jpg-1.jpg?v=1777274033&width=1080",
+      "link": "/collections/sale-1",
+      "alt": "Sillhouete Sale"
+    },
+    {
+      "id": 3,
+      "desktopImage": "https://sillhouete.com/cdn/shop/files/wb-3_bd931670-6ab7-4d15-ad52-a5ee3d462be7.jpg?v=1777274033&width=2400",
+      "mobileImage": "https://sillhouete.com/cdn/shop/files/wb-mbl-3_4d28cc37-ba9d-4515-be45-f208efe0942b.jpg?v=1777274033&width=1080",
+      "link": "/collections/maahi-ii-luxury-eid-pret",
+      "alt": "Maahi II Eid Pret"
+    },
+    {
+      "id": 4,
+      "desktopImage": "https://sillhouete.com/cdn/shop/files/IMG_4249_JPG.jpg?v=1776413159&width=2400",
+      "mobileImage": "https://sillhouete.com/cdn/shop/files/IMG_4250.JPG_1.jpg?v=1776413159&width=1080",
+      "link": "/collections/best-sellers",
+      "alt": "Best Sellers Collection"
+    }
+  ],
+  "videoCustom": {
+    "video1": "https://cdn.shopify.com/videos/c/o/v/061ca40eef70464293b2a672d62f7b0a.mp4",
+    "image": "https://sillhouete.com/cdn/shop/files/05.png?v=1758725288&width=800",
+    "video2": "https://cdn.shopify.com/videos/c/o/v/061ca40eef70464293b2a672d62f7b0a.mp4"
+  },
+  "shopByEvent": [
+    {
+      "title": "Engagement",
+      "link": "/collections/engagement-dresses",
+      "image": "https://sillhouete.com/cdn/shop/files/5_e07033cd-99f1-4016-8c06-d710e27a5b60.png?v=1771918660&width=1080"
+    },
+    {
+      "title": "Mehndi",
+      "link": "/collections/mehndi-dresses",
+      "image": "https://sillhouete.com/cdn/shop/collections/1_225c24ca-8c8d-47d9-a81c-9a24cf5f10ac.webp?v=1775131757&width=1080"
+    },
+    {
+      "title": "Nikkah",
+      "link": "/collections/nikkah-dresses",
+      "image": "https://sillhouete.com/cdn/shop/files/1000x1500_0006_052A6061.jpg?v=1758177457&width=1080"
+    },
+    {
+      "title": "Barat",
+      "link": "/collections/barat-dresses",
+      "image": "https://sillhouete.com/cdn/shop/files/1000x1500_0012_052A5865.jpg?v=1756903506&width=1080"
+    },
+    {
+      "title": "Walima",
+      "link": "/collections/walima-dresses",
+      "image": "https://sillhouete.com/cdn/shop/files/05.png?v=1758725288&width=1080"
+    }
+  ],
+  "collections": [
+    {
+      "id": "maahi-ii",
+      "title": "MAAHI II LUXURY EID PRET",
+      "link": "/collections/maahi-ii-luxury-eid-pret",
+      "products": [
+        {
+          "handle": "iris-rm-03",
+          "title": "Iris",
+          "link": "/products/iris-rm-03",
+          "currentPrice": "Rs.44,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-iris-royal-blue-intricate-embroidery.jpg?v=1776742287&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-name-color-intricate-embroidery-back.jpg?v=1776742287&width=1000"
+        },
+        {
+          "handle": "camilla",
+          "title": "Camilla",
+          "link": "/products/camilla",
+          "currentPrice": "Rs.39,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-chamilla-lime-yellow-embroidery.jpg?v=1776742337&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-chamilla-lime-yellow-embroidery-back.jpg?v=1776742337&width=1000"
+        },
+        {
+          "handle": "freya",
+          "title": "Freya",
+          "link": "/products/freya",
+          "currentPrice": "Rs.34,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-sublime-navy-blue-front.jpg?v=1776742385&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-sublime-navy-blue-back.jpg?v=1776742385&width=1000"
+        },
+        {
+          "handle": "smira",
+          "title": "Smira",
+          "link": "/products/smira",
+          "currentPrice": "Rs.37,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/image00002.jpg?v=1777277240&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/image00003.jpg?v=1777277240&width=1000"
+        },
+        {
+          "handle": "bella",
+          "title": "Bella",
+          "link": "/products/bella",
+          "currentPrice": "from Rs.31,500",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-bella-bottle-green-front.jpg?v=1776742468&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-bella-bottle-green-back.jpg?v=1776742468&width=1000"
+        },
+        {
+          "handle": "ivy",
+          "title": "IVY",
+          "link": "/products/ivy",
+          "currentPrice": "Rs.39,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-ivy-Pistachio-green-front.jpg?v=1776742426&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-ivy-Pistachio-green-back.jpg?v=1776742426&width=1000"
+        },
+        {
+          "handle": "vienna",
+          "title": "Vienna",
+          "link": "/products/vienna",
+          "currentPrice": "Rs.39,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-veinna-gray-shirt-trouser-dupatta.jpg?v=1776742512&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-veinna-gray-shirt-trouser-dupatta-back.jpg?v=1776742512&width=1000"
+        },
+        {
+          "handle": "livia",
+          "title": "Livia",
+          "link": "/products/livia",
+          "currentPrice": "Rs.37,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-livia-butter-yellow-shirt-trouser-dupatta.jpg?v=1776742555&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-livia-butter-yellow-shirt-trouser-dupatta-back.jpg?v=1776742555&width=1000"
+        }
+      ]
+    },
+    {
+      "id": "silk-solids-26",
+      "title": "Silk Solids'26",
+      "link": "/collections/silk-solids26",
+      "products": [
+        {
+          "handle": "maraki",
+          "title": "Maraki",
+          "link": "/products/maraki",
+          "currentPrice": "Rs.32,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-meraki-lime-yellow-front.jpg?v=1774261899&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-meraki-lime-yellow-back.jpg?v=1774261899&width=1000"
+        },
+        {
+          "handle": "noah",
+          "title": "Noah",
+          "link": "/products/noah",
+          "currentPrice": "Rs.32,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-Noah-mint-green-front.jpg?v=1774261942&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-Noah-mint-green-back.jpg?v=1774261942&width=1000"
+        },
+        {
+          "handle": "amore",
+          "title": "Amore",
+          "link": "/products/amore",
+          "currentPrice": "Rs.32,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-meraki-gray-front.jpg?v=1774261985&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-meraki-gray-back.jpg?v=1774261985&width=1000"
+        },
+        {
+          "handle": "zephyr",
+          "title": "Zephyr",
+          "link": "/products/zephyr",
+          "currentPrice": "Rs.30,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-zephyr-lavender-front.jpg?v=1774262024&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-zephyr-lavender-back.jpg?v=1774262024&width=1000"
+        },
+        {
+          "handle": "moris",
+          "title": "Moris",
+          "link": "/products/moris",
+          "currentPrice": "Rs.31,500",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-moris-taupe-front.jpg?v=1774262070&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-moris-taupe-back.jpg?v=1774262070&width=1000"
+        },
+        {
+          "handle": "sublime",
+          "title": "Sublime",
+          "link": "/products/sublime",
+          "currentPrice": "from Rs.29,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-Sublime-peach-front.jpg?v=1774262111&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-Sublime-peach-back.jpg?v=1774262111&width=1000"
+        },
+        {
+          "handle": "aroha",
+          "title": "Aroha",
+          "link": "/products/aroha",
+          "currentPrice": "Rs.32,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-aroha-red-front.jpg?v=1774262153&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-aroha-red-back.jpg?v=1774262153&width=1000"
+        },
+        {
+          "handle": "amelie",
+          "title": "Amelie",
+          "link": "/products/amelie",
+          "currentPrice": "from Rs.29,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-Sublime-mustard-front.jpg?v=1774262194&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-Sublime-mustard-back.jpg?v=1774262194&width=1000"
+        }
+      ]
+    },
+    {
+      "id": "raha-eid-pret-26",
+      "title": "Raha Eid Pret'26",
+      "link": "/collections/raha-eid-pret26",
+      "products": [
+        {
+          "handle": "ayzel",
+          "title": "Ayzel",
+          "link": "/products/ayzel",
+          "currentPrice": "from Rs.26,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-ayzel-ivory-front.jpg?v=1773919934&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-ayzel-ivory-back.jpg?v=1773919934&width=1000"
+        },
+        {
+          "handle": "layl",
+          "title": "Layl",
+          "link": "/products/layl",
+          "currentPrice": "from Rs.26,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-layal-red-front.jpg?v=1773920038&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-layal-red-back.jpg?v=1773920038&width=1000"
+        },
+        {
+          "handle": "amavi",
+          "title": "Amavi",
+          "link": "/products/amavi",
+          "currentPrice": "from Rs.26,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-amavi-bottle-green-front.jpg?v=1773920083&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-amavi-bottle-green-back.jpg?v=1773920083&width=1000"
+        },
+        {
+          "handle": "amal",
+          "title": "Amal",
+          "link": "/products/amal",
+          "currentPrice": "from Rs.21,500",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-amal-yellow-front.jpg?v=1773920127&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-amal-yellow-back.jpg?v=1773920127&width=1000"
+        },
+        {
+          "handle": "nisa",
+          "title": "Nisa",
+          "link": "/products/nisa",
+          "currentPrice": "from Rs.22,500",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-nisa-black-front.jpg?v=1773920173&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-nisa-black-back.jpg?v=1773920173&width=1000"
+        },
+        {
+          "handle": "lara",
+          "title": "Lara",
+          "link": "/products/lara",
+          "currentPrice": "from Rs.22,500",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-lara-hot-pink-front.jpg?v=1773920215&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-lara-hot-pink-back.jpg?v=1773920215&width=1000"
+        },
+        {
+          "handle": "mira",
+          "title": "Mira",
+          "link": "/products/mira",
+          "currentPrice": "from Rs.21,500",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-mira-pink-front.jpg?v=1773920257&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-mira-pink-back.jpg?v=1773920257&width=1000"
+        },
+        {
+          "handle": "erza",
+          "title": "Erza",
+          "link": "/products/erza",
+          "currentPrice": "from Rs.22,500",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-erza-mint-green-front.jpg?v=1773920302&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-erza-mint-green-back.jpg?v=1773920302&width=1000"
+        }
+      ]
+    },
+    {
+      "id": "best-sellers",
+      "title": "Best Sellers",
+      "link": "/collections/best-sellers",
+      "products": [
+        {
+          "handle": "ayzel",
+          "title": "Ayzel",
+          "link": "/products/ayzel",
+          "currentPrice": "from Rs.26,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-ayzel-ivory-front.jpg?v=1773919934&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-ayzel-ivory-back.jpg?v=1773919934&width=1000"
+        },
+        {
+          "handle": "layl",
+          "title": "Layl",
+          "link": "/products/layl",
+          "currentPrice": "from Rs.26,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-layal-red-front.jpg?v=1773920038&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-layal-red-back.jpg?v=1773920038&width=1000"
+        },
+        {
+          "handle": "amavi",
+          "title": "Amavi",
+          "link": "/products/amavi",
+          "currentPrice": "from Rs.26,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-amavi-bottle-green-front.jpg?v=1773920083&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-amavi-bottle-green-back.jpg?v=1773920083&width=1000"
+        },
+        {
+          "handle": "kaya-rlp",
+          "title": "Kaya (RLP 3)",
+          "link": "/products/kaya-rlp",
+          "currentPrice": "Rs.39,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/8.jpg?v=1758105286&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/1000x1500_0007_052A6046.jpg?v=1758178129&width=1000"
+        },
+        {
+          "handle": "maraki",
+          "title": "Maraki",
+          "link": "/products/maraki",
+          "currentPrice": "Rs.32,900",
+          "comparePrice": null,
+          "isNew": true,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-meraki-lime-yellow-front.jpg?v=1774261899&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/sillhouete-formal-dress-meraki-lime-yellow-back.jpg?v=1774261899&width=1000"
+        },
+        {
+          "handle": "grey",
+          "title": "Noir (RLP 4)",
+          "link": "/products/grey",
+          "currentPrice": "Rs.39,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/7.jpg?v=1758105325&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/1000x1500_0006_052A6061.jpg?v=1758177457&width=1000"
+        },
+        {
+          "handle": "serea",
+          "title": "Serea (RLP 8)",
+          "link": "/products/serea",
+          "currentPrice": "Rs.39,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/web_images_0006_2.jpg?v=1758812675&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/web_images_0007_1.jpg?v=1758812675&width=1000"
+        },
+        {
+          "handle": "orange",
+          "title": "Velour (RLP 2)",
+          "link": "/products/orange",
+          "currentPrice": "Rs.39,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/5.jpg?v=1758105373&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/1000x1500_0008_052A6031.jpg?v=1758178129&width=1000"
+        }
+      ]
+    },
+    {
+      "id": "formals",
+      "title": "Formals",
+      "link": "/collections/formal-dresses",
+      "products": [
+        {
+          "handle": "nyah",
+          "title": "Nyah",
+          "link": "/products/nyah",
+          "currentPrice": "from Rs.69,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0085_DSC06881.jpg?v=1770984950&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0082_DSC06935.jpg?v=1770984950&width=1000"
+        },
+        {
+          "handle": "solara",
+          "title": "Solara",
+          "link": "/products/solara",
+          "currentPrice": "from Rs.61,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0038_DSC07835.jpg?v=1770984992&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0036_DSC07857.jpg?v=1770984992&width=1000"
+        },
+        {
+          "handle": "iris",
+          "title": "Iris",
+          "link": "/products/iris",
+          "currentPrice": "from Rs.60,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0028_DSC07968.jpg?v=1770985036&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0026_DSC07997.jpg?v=1770985036&width=1000"
+        },
+        {
+          "handle": "raya",
+          "title": "Raya",
+          "link": "/products/raya",
+          "currentPrice": "from Rs.74,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0077_DSC07132.jpg?v=1770985078&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0074_DSC07198.jpg?v=1770985078&width=1000"
+        },
+        {
+          "handle": "livia-mocha",
+          "title": "livia (RHF-08)",
+          "link": "/products/livia-mocha",
+          "currentPrice": "Rs.69,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0059_DSC07447.jpg?v=1770985121&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0055_DSC07519.jpg?v=1770985121&width=1000"
+        },
+        {
+          "handle": "elaris",
+          "title": "Elaris",
+          "link": "/products/elaris",
+          "currentPrice": "from Rs.69,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0020_DSC08083.jpg?v=1770985163&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0019_DSC08092.jpg?v=1770985163&width=1000"
+        },
+        {
+          "handle": "lirien",
+          "title": "Lirien",
+          "link": "/products/lirien",
+          "currentPrice": "from Rs.69,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0016_DSC08113.jpg?v=1770985206&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0013_DSC08154.jpg?v=1770985206&width=1000"
+        },
+        {
+          "handle": "aurene",
+          "title": "Aurene",
+          "link": "/products/aurene",
+          "currentPrice": "from Rs.69,900",
+          "comparePrice": null,
+          "isNew": false,
+          "isSoldOut": false,
+          "primaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0008_DSC08203.jpg?v=1770985250&width=1080",
+          "secondaryImage": "https://sillhouete.com/cdn/shop/files/webimages_0006_DSC08235.jpg?v=1770985250&width=1000"
+        }
+      ]
+    }
+  ]
+}
