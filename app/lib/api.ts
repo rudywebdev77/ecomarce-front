@@ -28,3 +28,4 @@ export async function fetchFromApi(endpoint: string, options: RequestInit = {}) 
 }
 
 export { API_BASE };
+
