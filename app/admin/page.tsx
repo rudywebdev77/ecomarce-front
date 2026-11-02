@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Login form
@@ -463,65 +464,309 @@ export default function AdminPage() {
   // MAIN ADMIN DASHBOARD INTERFACE
   // =========================================================
   return (
-    <div className="min-h-screen bg-[#f7f7f8] flex flex-col font-sans-custom text-[#111111]">
-      {/* Top Navbar */}
-      <header className="bg-black text-white h-16 flex items-center justify-between px-4 sm:px-8 border-b border-[#222]">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="text-[20px] font-serif font-bold tracking-[0.2em] uppercase text-white hover:opacity-80">
-            SILLHOUETE
-          </Link>
-          <span className="hidden sm:inline bg-[#222222] text-[#e0e0e0] text-[11px] font-mono px-2.5 py-1 uppercase tracking-wider">
-            ADMIN ENGINE
-          </span>
-        </div>
+    <div className="min-h-screen bg-[#f3f4f6] flex flex-col md:flex-row font-sans-custom text-[#111111]">
+      {/* Mobile Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-xs"
+        />
+      )}
 
-        <div className="flex items-center gap-4 text-[13px]">
-          <span className="hidden md:inline text-[#aaaaaa]">
-            Logged in as <strong className="text-white">{adminUser?.name || "Admin"}</strong>
-          </span>
-          <Link
-            href="/"
-            target="_blank"
-            className="text-[12px] bg-[#222] text-white px-3 py-1.5 hover:bg-[#333] transition-colors uppercase tracking-wider"
-          >
-            View Live Site ↗
-          </Link>
+      {/* ========================================================= */}
+      {/* LUXURY MODERN SIDEBAR                                      */}
+      {/* ========================================================= */}
+      <aside
+        className={`fixed md:sticky top-0 left-0 h-screen w-64 lg:w-72 bg-[#0c0e12] text-[#d1d5db] flex flex-col z-50 transition-transform duration-300 ease-in-out border-r border-[#1a1f29] shrink-0 select-none ${
+          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        {/* Brand Header */}
+        <div className="p-6 border-b border-[#1a1f29] flex items-center justify-between">
+          <div>
+            <Link href="/" className="inline-block">
+              <span className="font-serif text-[20px] font-bold tracking-[0.25em] uppercase text-white block">
+                SILLHOUETE
+              </span>
+            </Link>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#9ca3af]">
+                MongoDB Live
+              </span>
+            </div>
+          </div>
           <button
-            onClick={handleLogout}
-            className="text-[12px] border border-[#444] text-[#ccc] px-3 py-1.5 hover:text-white hover:border-white transition-colors uppercase tracking-wider cursor-pointer"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="md:hidden text-[#9ca3af] hover:text-white p-1 cursor-pointer"
           >
-            Logout
+            ✕
           </button>
         </div>
-      </header>
 
-      {/* Navigation Sub-bar / Tabs */}
-      <nav className="bg-white border-b border-[#e5e5e5] px-4 sm:px-8 overflow-x-auto flex space-x-1 sm:space-x-4">
-        {[
-          { id: "dashboard", label: "Dashboard Overview" },
-          { id: "products", label: "Products Catalog" },
-          { id: "orders", label: "Orders & Stripe" },
-          { id: "customers", label: "Customers" },
-          { id: "inquiries", label: "Messages & Inquiries" },
-          { id: "blogs", label: "Editorial Blogs" },
-          { id: "settings", label: "Website Settings" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as Tab)}
-            className={`py-4 px-3 text-[13px] font-semibold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
-              activeTab === tab.id
-                ? "border-black text-black"
-                : "border-transparent text-[#666666] hover:text-black hover:border-[#cccccc]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+        {/* Sidebar Nav Links */}
+        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-wider text-[#6b7280] font-semibold px-3 mb-2">
+              Store Management
+            </p>
+            <nav className="space-y-1">
+              {[
+                {
+                  id: "dashboard",
+                  label: "Dashboard",
+                  icon: (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-4a1 1 0 011-1h4a1 1 0 011 1v8a1 1 0 01-1 1h-4a1 1 0 01-1-1v-8z" />
+                    </svg>
+                  ),
+                },
+                {
+                  id: "products",
+                  label: "Products Catalog",
+                  badge: products.length || "167",
+                  icon: (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  ),
+                },
+                {
+                  id: "orders",
+                  label: "Orders & Stripe",
+                  badge: orders.length || "3",
+                  icon: (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                  ),
+                },
+                {
+                  id: "customers",
+                  label: "Customers",
+                  badge: customers.length || "4",
+                  icon: (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ),
+                },
+              ].map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id as Tab);
+                      setIsMobileSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xs transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black font-semibold shadow-xs"
+                        : "text-[#9ca3af] hover:text-white hover:bg-[#161a22]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                          isActive
+                            ? "bg-black text-white"
+                            : "bg-[#1f242d] text-[#9ca3af]"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
 
-      {/* Main Workspace Body */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-8">
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-wider text-[#6b7280] font-semibold px-3 mb-2">
+              Content & Settings
+            </p>
+            <nav className="space-y-1">
+              {[
+                {
+                  id: "inquiries",
+                  label: "Messages & Inquiries",
+                  badge: stats?.metrics?.unreadMessagesCount > 0 ? `${stats.metrics.unreadMessagesCount} new` : null,
+                  badgeHighlight: true,
+                  icon: (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                  ),
+                },
+                {
+                  id: "blogs",
+                  label: "Editorial Blogs",
+                  icon: (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                  ),
+                },
+                {
+                  id: "settings",
+                  label: "Website Settings",
+                  icon: (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  ),
+                },
+              ].map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id as Tab);
+                      setIsMobileSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xs transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-black font-semibold shadow-xs"
+                        : "text-[#9ca3af] hover:text-white hover:bg-[#161a22]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
+                          item.badgeHighlight
+                            ? "bg-amber-400 text-black"
+                            : isActive
+                            ? "bg-black text-white"
+                            : "bg-[#1f242d] text-[#9ca3af]"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+
+        {/* Sidebar Footer User Card */}
+        <div className="p-4 border-t border-[#1a1f29] bg-[#08090c]">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-[#1e232e] text-white flex items-center justify-center font-bold text-[12px] border border-[#2c3340]">
+              S
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold text-white truncate leading-tight">
+                {adminUser?.name || "Sillhouete Admin"}
+              </p>
+              <p className="text-[10px] text-[#8c93a0] truncate font-mono">
+                {adminUser?.email || "admin@sillhouete.com"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-[11px] font-bold uppercase tracking-wider">
+            <Link
+              href="/"
+              target="_blank"
+              className="text-center py-1.5 bg-[#141820] text-[#c0c5d0] hover:text-white hover:bg-[#1d232e] border border-[#222834] transition-colors rounded-xs"
+            >
+              Store ↗
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="py-1.5 bg-transparent text-[#e06c75] hover:bg-[#2c1a1d] border border-[#3e1f24] transition-colors rounded-xs cursor-pointer"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* ========================================================= */}
+      {/* MAIN CONTENT WRAPPER                                       */}
+      {/* ========================================================= */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Header Bar */}
+        <header className="h-16 bg-white border-b border-[#e5e7eb] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-2 text-[#4b5563] hover:text-black rounded-xs border border-[#e5e7eb] cursor-pointer"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-[#6b7280]">
+                Admin Console
+              </p>
+              <h2 className="text-[15px] font-bold text-[#111827] capitalize tracking-tight font-serif">
+                {activeTab === "dashboard" && "Dashboard Overview & Analytics"}
+                {activeTab === "products" && "Products Catalog & Inventory"}
+                {activeTab === "orders" && "Customer Orders & Stripe Payments"}
+                {activeTab === "customers" && "Registered Customers & Profiles"}
+                {activeTab === "inquiries" && "Customer Care Inquiries & Messages"}
+                {activeTab === "blogs" && "Fashion Journal & Editorial Blogs"}
+                {activeTab === "settings" && "Website Data & Stripe Settings"}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setEditingProduct(null);
+                setProdForm({
+                  title: "",
+                  category: "Luxury Pret",
+                  price: "45000",
+                  compare_at_price: "",
+                  description: "<p>Pakistani luxury designer outfit crafted with premium fabrics and detailed handwork.</p>",
+                  image: "https://sillhouete.com/cdn/shop/files/IMG_3962.jpg",
+                  in_stock: true,
+                  sizes: "XS, S, M, L, XL, Custom Size",
+                  tags: "Luxury Pret, Embroidered",
+                });
+                setShowAddProductModal(true);
+              }}
+              className="flex items-center gap-1.5 bg-black text-white px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-[#222] transition-colors rounded-xs shadow-xs cursor-pointer"
+            >
+              <span>+ Add Outfit</span>
+            </button>
+
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 text-[10px] font-mono border border-emerald-200 rounded-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block"></span>
+              MongoDB Active
+            </span>
+
+            <Link
+              href="/"
+              target="_blank"
+              className="hidden lg:inline-flex items-center text-[11px] border border-[#d1d5db] text-[#374151] px-3 py-1.5 hover:border-black hover:text-black transition-colors rounded-xs uppercase tracking-wider"
+            >
+              Live Site ↗
+            </Link>
+          </div>
+        </header>
+
+        {/* Main Content Body */}
+        <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
         {/* ========================================================= */}
         {/* 1. DASHBOARD OVERVIEW TAB                                 */}
         {/* ========================================================= */}
@@ -1680,6 +1925,7 @@ export default function AdminPage() {
         )}
       </main>
     </div>
-  );
+  </div>
+);
 }
 
