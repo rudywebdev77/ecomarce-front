@@ -9,9 +9,10 @@ export default function CustomMediaSection() {
 
   return (
     <section className="w-full bg-black overflow-hidden" aria-label="Media Showcase">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-0 w-full">
+      {/* 3 Columns side-by-side on both Mobile and Desktop (matches sillhouete.com) */}
+      <div className="grid grid-cols-3 gap-0 w-full">
         {/* Left Video */}
-        <div className="relative aspect-[9/16] md:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
+        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
           <video
             autoPlay
             loop
@@ -24,18 +25,18 @@ export default function CustomMediaSection() {
         </div>
 
         {/* Center Image */}
-        <div className="relative aspect-[9/16] md:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
+        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
           <Image
             src={image}
             alt="Sillhouete Haute Couture"
             fill
-            sizes="33vw"
+            sizes="(max-width: 768px) 33vw, 33vw"
             className="object-cover transition-transform duration-700 hover:scale-105"
           />
         </div>
 
         {/* Right Video */}
-        <div className="relative aspect-[9/16] md:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
+        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
           <video
             autoPlay
             loop

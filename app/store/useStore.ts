@@ -7,6 +7,21 @@ export interface CartItem {
   image: string;
   quantity: number;
   size?: string;
+  selectedOptions?: Record<string, string>;
+}
+
+export interface Product {
+  id: string;
+  title: string;
+  price: string;
+  image: string;
+  images?: string[];
+  description?: string;
+  sizes?: string[];
+  handle?: string;
+  primaryImage?: string;
+  secondaryImage?: string;
+  currentPrice?: string;
 }
 
 export const CURRENCY_RATES: Record<string, { symbol: string; rate: number; prefix: boolean }> = {
@@ -56,8 +71,8 @@ interface AppState {
   closeMobileNav: () => void;
 
   // Quick View Modal
-  quickViewProduct: any | null;
-  openQuickView: (product: any) => void;
+  quickViewProduct: Product | null;
+  openQuickView: (product: Product) => void;
   closeQuickView: () => void;
 
   // Currency

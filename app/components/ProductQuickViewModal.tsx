@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useStore, formatPrice } from "../store/useStore";
 
 export default function ProductQuickViewModal() {
@@ -14,17 +15,19 @@ export default function ProductQuickViewModal() {
   const images = [
     quickViewProduct.primaryImage,
     quickViewProduct.secondaryImage,
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
+
+  const activeImg = images[activeImageIndex] || quickViewProduct.primaryImage || "";
 
   const sizes = ["XS", "S", "M", "L", "XL", "Custom"];
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) {
       addToCart({
-        id: `${quickViewProduct.handle}-${selectedSize}`,
+        id: `${quickViewProduct.handle || quickViewProduct.id}-${selectedSize}`,
         title: `${quickViewProduct.title} (${selectedSize})`,
-        price: quickViewProduct.currentPrice,
-        image: quickViewProduct.primaryImage,
+        price: quickViewProduct.currentPrice || quickViewProduct.price || "",
+        image: quickViewProduct.primaryImage || quickViewProduct.image || "",
         size: selectedSize,
       });
     }
@@ -56,11 +59,14 @@ export default function ProductQuickViewModal() {
             {/* Image Gallery */}
             <div className="p-4 bg-[#f8f8f8] flex flex-col justify-between">
               <div className="relative w-full pb-[140%] overflow-hidden bg-white">
-                <img
-                  src={images[activeImageIndex] || quickViewProduct.primaryImage}
-                  alt={quickViewProduct.title}
-                  className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-300"
-                />
+                {activeImg && (
+                  <Image
+                    src={activeImg}
+                    alt={quickViewProduct.title}
+                    fill
+                    className="object-cover object-center transition-all duration-300"
+                  />
+                )}
               </div>
 
               {/* Thumbnails */}
@@ -70,11 +76,11 @@ export default function ProductQuickViewModal() {
                     <button
                       key={idx}
                       onClick={() => setActiveImageIndex(idx)}
-                      className={`w-14 h-20 border-2 overflow-hidden transition-all ${
+                      className={`w-14 h-20 border-2 overflow-hidden transition-all relative ${
                         activeImageIndex === idx ? "border-black" : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <img src={img} alt="thumb" className="w-full h-full object-cover" />
+                      <Image src={img} alt="thumb" fill className="object-cover" />
                     </button>
                   ))}
                 </div>
