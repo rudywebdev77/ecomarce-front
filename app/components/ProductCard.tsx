@@ -45,7 +45,7 @@ export default function ProductCard({
   );
 
   return (
-    <div className="product-card group flex flex-col">
+    <div className="product-card group flex flex-col" suppressHydrationWarning>
       {/* Image Container with 2:3 aspect ratio wrapped in product link */}
       <Link
         href={product.link || `/products/${product.handle}`}

@@ -24,6 +24,7 @@ export default function ShopByEventSection() {
             <Link
               key={event.title}
               href={event.link}
+              suppressHydrationWarning
               className={`event-card group relative block overflow-hidden ${
                 index === 4
                   ? "col-span-2 max-w-[calc(50%-6px)] mx-auto w-full lg:col-span-1 lg:max-w-none"

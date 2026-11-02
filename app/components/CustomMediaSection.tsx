@@ -12,7 +12,7 @@ export default function CustomMediaSection() {
       {/* 3 Columns side-by-side on both Mobile and Desktop (matches sillhouete.com) */}
       <div className="grid grid-cols-3 gap-0 w-full">
         {/* Left Video */}
-        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
+        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black" suppressHydrationWarning>
           <video
             autoPlay
             loop
@@ -25,7 +25,7 @@ export default function CustomMediaSection() {
         </div>
 
         {/* Center Image */}
-        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
+        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black" suppressHydrationWarning>
           <Image
             src={image}
             alt="Sillhouete Haute Couture"
@@ -36,7 +36,7 @@ export default function CustomMediaSection() {
         </div>
 
         {/* Right Video */}
-        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black">
+        <div className="custom-media-card relative aspect-[9/16] sm:aspect-[3/4] lg:aspect-[4/5] w-full overflow-hidden bg-black" suppressHydrationWarning>
           <video
             autoPlay
             loop

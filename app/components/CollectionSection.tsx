@@ -73,7 +73,7 @@ function ProductCard({ product }: { product: Product }) {
   useEffect(() => stop, []);
 
   return (
-    <div className="product-card group flex flex-col h-full">
+    <div className="product-card group flex flex-col h-full" suppressHydrationWarning>
       {/* Image Container with 2:3 ratio wrapped in product link */}
       <Link
         href={product.link || `/products/${product.handle}`}

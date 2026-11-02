@@ -528,6 +528,7 @@ export default function ProductDetailClient({
                   key={item.handle}
                   href={`/products/${item.handle}`}
                   className="product-card group flex flex-col"
+                  suppressHydrationWarning
                 >
                   <div className="relative w-full aspect-[2/3] overflow-hidden bg-[#f9f9f9]">
                     <Image
