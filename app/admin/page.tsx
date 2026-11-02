@@ -665,8 +665,8 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f0f0f0]">
-                    {(stats?.recentOrders || []).map((o: any) => (
-                      <tr key={o.id} className="hover:bg-[#fafafa]">
+                    {(stats?.recentOrders || []).map((o: any, idx: number) => (
+                      <tr key={o._id || o.id || idx} className="hover:bg-[#fafafa]">
                         <td className="py-4 px-6 font-mono font-semibold text-black">{o.id}</td>
                         <td className="py-4 px-6">
                           <p className="font-medium text-black">{o.customer?.first_name} {o.customer?.last_name}</p>
@@ -777,8 +777,8 @@ export default function AdminPage() {
                       return matchesSearch && matchesCat;
                     })
                     .slice(0, 50)
-                    .map((prod) => (
-                      <tr key={prod.id} className="hover:bg-[#fafafa]">
+                    .map((prod: any, idx: number) => (
+                      <tr key={prod._id || prod.id || idx} className="hover:bg-[#fafafa]">
                         <td className="py-3 px-6">
                           <div className="relative w-12 h-16 bg-[#f0f0f0] overflow-hidden border border-[#e0e0e0]">
                             {prod.images && prod.images[0] && (
@@ -1032,8 +1032,8 @@ export default function AdminPage() {
                         (o.customer?.first_name && o.customer.first_name.toLowerCase().includes(q));
                       return matchesStatus && matchesSearch;
                     })
-                    .map((o) => (
-                      <tr key={o.id} className="hover:bg-[#fafafa]">
+                    .map((o: any, idx: number) => (
+                      <tr key={o._id || o.id || idx} className="hover:bg-[#fafafa]">
                         <td className="py-4 px-6 font-mono font-bold text-black">{o.id}</td>
                         <td className="py-4 px-6 text-[12px] text-[#666666]">
                           {new Date(o.created_at || Date.now()).toLocaleDateString("en-US", {
@@ -1242,8 +1242,8 @@ export default function AdminPage() {
                         (c.city && c.city.toLowerCase().includes(q))
                       );
                     })
-                    .map((cust) => (
-                      <tr key={cust.id} className="hover:bg-[#fafafa]">
+                    .map((cust: any, idx: number) => (
+                      <tr key={cust._id || cust.id || cust.email || idx} className="hover:bg-[#fafafa]">
                         <td className="py-4 px-6 font-semibold text-black">
                           {cust.first_name} {cust.last_name}
                         </td>
@@ -1282,9 +1282,9 @@ export default function AdminPage() {
                 {inquiries.length === 0 ? (
                   <p className="p-6 text-center text-[#999]">No messages received yet.</p>
                 ) : (
-                  inquiries.map((m) => (
+                  inquiries.map((m: any, idx: number) => (
                     <div
-                      key={m.id}
+                      key={m._id || m.id || idx}
                       onClick={() => {
                         setActiveInquiry(m);
                         setReplyText(m.reply || "");
@@ -1410,8 +1410,8 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {blogs.map((b) => (
-                <div key={b.id} className="bg-white border border-[#e5e5e5] overflow-hidden flex flex-col">
+              {blogs.map((b: any, idx: number) => (
+                <div key={b._id || b.id || idx} className="bg-white border border-[#e5e5e5] overflow-hidden flex flex-col">
                   <div className="relative h-[200px] w-full bg-[#f0f0f0]">
                     {b.featured_image && (
                       <Image src={b.featured_image} alt={b.title} fill className="object-cover" sizes="300px" />

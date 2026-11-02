@@ -73,9 +73,9 @@ export default async function BlogsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-          {blogs.map((blog: any) => (
+          {blogs.map((blog: any, idx: number) => (
             <article
-              key={blog.id}
+              key={blog._id || blog.id || idx}
               className="group flex flex-col bg-white border border-[#f0f0f0] overflow-hidden hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-all"
             >
               <Link href={`/blogs/${blog.handle}`} className="relative h-[320px] w-full overflow-hidden bg-[#fafafa] block">
