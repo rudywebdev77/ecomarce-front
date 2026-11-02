@@ -138,6 +138,7 @@ export default function Footer() {
                 { name: "BLOG", href: "/blogs/news" },
                 { name: "Contact Us.", href: "/pages/contact-us" },
                 { name: "FAQS.", href: "/pages/faqs" },
+                { name: "ADMIN DASHBOARD", href: "/admin" },
               ].map((link) => (
                 <li key={link.name}>
                   <Link
@@ -373,6 +374,7 @@ export default function Footer() {
                     { name: "BLOG", href: "/blogs/news" },
                     { name: "Contact Us.", href: "/pages/contact-us" },
                     { name: "FAQS.", href: "/pages/faqs" },
+                    { name: "ADMIN DASHBOARD", href: "/admin" },
                   ].map((link) => (
                     <li key={link.name}>
                       <Link

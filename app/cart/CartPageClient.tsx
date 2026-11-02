@@ -3,9 +3,11 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useStore, formatPrice } from "../store/useStore";
 
 export default function CartPageClient() {
+  const router = useRouter();
   const { cart, removeFromCart, updateQuantity, currentCurrency } = useStore();
 
   const subtotal = cart.reduce((sum, item) => {
@@ -134,9 +136,7 @@ export default function CartPageClient() {
               </p>
 
               <button
-                onClick={() =>
-                  alert("Checkout is simulated for demo. Thank you for shopping with Sillhouete!")
-                }
+                onClick={() => router.push("/checkout")}
                 className="w-full bg-black hover:bg-[#222222] text-white py-4 text-[13px] font-bold uppercase tracking-[0.25em] transition-colors cursor-pointer"
               >
                 Proceed to Checkout

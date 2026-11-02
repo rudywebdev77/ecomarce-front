@@ -59,6 +59,7 @@ interface AppState {
   addToCart: (item: Omit<CartItem, "quantity">) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, delta: number) => void;
+  clearCart: () => void;
 
   // Search
   isSearchOpen: boolean;
@@ -117,6 +118,7 @@ export const useStore = create<AppState>((set) => ({
         })
         .filter(Boolean) as CartItem[],
     })),
+  clearCart: () => set({ cart: [] }),
 
   isSearchOpen: false,
   openSearch: () => set({ isSearchOpen: true }),

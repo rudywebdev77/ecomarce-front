@@ -9,6 +9,7 @@ import CartDrawer from "../../components/CartDrawer";
 import SearchModal from "../../components/SearchModal";
 import CurrencySwitcher from "../../components/CurrencySwitcher";
 import WhatsAppButton from "../../components/WhatsAppButton";
+import ContactForm from "../../components/ContactForm";
 import siteData from "../../site_data.json";
 
 interface PageProps {
@@ -62,46 +63,7 @@ const PAGES_CONTENT: Record<
             </div>
           </div>
 
-          <div className="bg-[#fcfcfc] border border-[#f0f0f0] p-6">
-            <h3 className="text-[16px] font-bold uppercase tracking-[0.1em] text-[#111111] mb-4">
-              Send us a Message
-            </h3>
-            <form className="space-y-4 text-[13px] font-sans-custom">
-              <div>
-                <label className="block text-[#444444] mb-1 font-medium">Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Your full name"
-                  className="w-full px-3 py-2 border border-[#d6d6d6] focus:border-black outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[#444444] mb-1 font-medium">Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="your@email.com"
-                  className="w-full px-3 py-2 border border-[#d6d6d6] focus:border-black outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[#444444] mb-1 font-medium">Message</label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="How can we help you?"
-                  className="w-full px-3 py-2 border border-[#d6d6d6] focus:border-black outline-none resize-none"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-black text-white py-3 text-[12px] font-bold uppercase tracking-[0.2em] hover:bg-[#222222] transition-colors"
-              >
-                Send Message
-              </button>
-            </form>
-          </div>
+          <ContactForm />
         </div>
       </div>
     ),
