@@ -48,7 +48,7 @@ export async function generateMetadata({
   const decodedHandle = decodeURIComponent(handle).toLowerCase();
 
   try {
-    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`);
+    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       if (data.product) {
@@ -93,7 +93,7 @@ async function ProductContent({
   let dbSimilar: any[] = [];
 
   try {
-    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`);
+    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       if (data.product) {

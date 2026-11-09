@@ -584,7 +584,13 @@ export default function AdminPage() {
       is_new: prodForm.is_new,
       is_featured: prodForm.is_featured,
       sizes: prodForm.sizes.split(",").map((s) => s.trim()).filter(Boolean),
-      tags: prodForm.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: (() => {
+        const userTags = prodForm.tags.split(",").map((t) => t.trim()).filter(Boolean);
+        if (prodForm.category && !userTags.some((t) => t.toLowerCase() === prodForm.category.toLowerCase())) {
+          userTags.unshift(prodForm.category);
+        }
+        return userTags;
+      })(),
     };
 
     try {
