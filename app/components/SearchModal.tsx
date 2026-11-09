@@ -158,7 +158,6 @@ export default function SearchModal() {
                         key={product.handle}
                         className="flex gap-3 p-2 border border-[#f0f0f0] hover:border-[#ddd] transition-colors items-center"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={product.primaryImage}
                           alt={product.title}
