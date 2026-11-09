@@ -451,7 +451,7 @@ export default function AdminPage() {
           setStats(data);
         }
       } else if (activeTab === "products") {
-        const res = await fetch(`${API_BASE}/products?limit=150`);
+        const res = await fetch(`${API_BASE}/products?limit=500`);
         if (res.ok) {
           const data = await res.json();
           setProducts(data.products || []);
@@ -610,7 +610,7 @@ export default function AdminPage() {
       setShowAddProductModal(false);
       setEditingProduct(null);
       fetchDashboardData();
-      const pRes = await fetch(`${API_BASE}/products?limit=150`);
+      const pRes = await fetch(`${API_BASE}/products?limit=500`);
       if (pRes.ok) {
         const pData = await pRes.json();
         setProducts(pData.products || []);
@@ -808,7 +808,7 @@ export default function AdminPage() {
       setEditingCategory(null);
       await fetchCategories();
       // Also refresh products in case any category rename synchronized existing outfits
-      const pRes = await fetch(`${API_BASE}/products?limit=150`);
+      const pRes = await fetch(`${API_BASE}/products?limit=500`);
       if (pRes.ok) {
         const pData = await pRes.json();
         setProducts(pData.products || []);
@@ -836,7 +836,7 @@ export default function AdminPage() {
       }
       setCatSuccess(data.message || "Successfully restored all 34 categories!");
       await fetchCategories();
-      const pRes = await fetch(`${API_BASE}/products?limit=150`);
+      const pRes = await fetch(`${API_BASE}/products?limit=500`);
       if (pRes.ok) {
         const pData = await pRes.json();
         setProducts(pData.products || []);
@@ -1638,7 +1638,7 @@ export default function AdminPage() {
                       return (
                         <optgroup key={parent.id || parent._id || parent.name} label={`📁 ${parent.name}`}>
                           <option value={parent.name}>
-                            {parent.name} (Entire Collection)
+                            {parent.name} ({parent.product_count ?? 0})
                           </option>
                           {subs.map((sub) => (
                             <option key={sub.id || sub._id || sub.name} value={sub.name}>
@@ -1679,24 +1679,53 @@ export default function AdminPage() {
                           const matchesSearch =
                             !productSearch ||
                             p.title.toLowerCase().includes(productSearch.toLowerCase()) ||
-                            (p.category && p.category.toLowerCase().includes(productSearch.toLowerCase()));
+                            (p.category && p.category.toLowerCase().includes(productSearch.toLowerCase())) ||
+                            (Array.isArray(p.tags) && p.tags.some((t: string) => String(t).toLowerCase().includes(productSearch.toLowerCase())));
+
                           const matchesCat = (() => {
                             if (productCategory === "all") return true;
-                            const pCat = (p.category || "").trim().toLowerCase();
                             const selCat = productCategory.trim().toLowerCase();
-                            if (pCat === selCat) return true;
+                            const pCat = (p.category || "").trim().toLowerCase();
+                            const pType = (p.product_type || "").trim().toLowerCase();
+                            const pTags = Array.isArray(p.tags) ? p.tags.map((t: string) => String(t).trim().toLowerCase()) : [];
+                            const pTitle = (p.title || "").trim().toLowerCase();
+
+                            // 1. Direct or partial match on category, product_type or tags
+                            if (pCat === selCat || pType === selCat || pTags.includes(selCat)) return true;
+                            if (pCat.includes(selCat) || pTags.some((t: string) => t.includes(selCat) || selCat.includes(t))) return true;
+
+                            // 2. Parent collection match (all products in parent or its subcategories)
                             const parentCat = categories.find((c) => !c.parent_id && c.name.toLowerCase() === selCat);
                             if (parentCat) {
-                              const subNames = categories
-                                .filter((s) => s.parent_id === (parentCat.id || parentCat._id))
-                                .map((s) => s.name.toLowerCase());
-                              return subNames.includes(pCat);
+                              const subCats = categories.filter((s) => s.parent_id === (parentCat.id || parentCat._id));
+                              const subNames = subCats.map((s) => s.name.toLowerCase());
+                              const subSlugs = subCats.map((s) => (s.slug || "").toLowerCase()).filter(Boolean);
+
+                              if (subNames.includes(pCat) || subSlugs.includes(pCat)) return true;
+                              if (pTags.some((t: string) => subNames.includes(t) || subSlugs.includes(t))) return true;
+                              if (subNames.some((sn: string) => pCat.includes(sn) || pTags.some((t: string) => t.includes(sn)))) return true;
                             }
+
+                            // 3. Subcategory match by name, slug or root keywords
+                            const targetCat = categories.find((c) => c.name.toLowerCase() === selCat);
+                            if (targetCat) {
+                              const targetSlug = (targetCat.slug || "").toLowerCase();
+                              if (targetSlug && (pCat === targetSlug || pTags.includes(targetSlug))) return true;
+                              
+                              const rootWords = targetCat.name
+                                .toLowerCase()
+                                .split(/[^a-z0-9]+/)
+                                .filter((w: string) => w.length >= 4 && !["luxury", "pret", "formals", "formal", "dresses", "collection", "birdal", "bridal", "arrivals"].includes(w));
+                              if (rootWords.length > 0 && rootWords.some((rw: string) => pTitle.includes(rw) || pCat.includes(rw) || pTags.some((t: string) => t.includes(rw)))) {
+                                return true;
+                              }
+                            }
+
                             return false;
                           })();
                           return matchesSearch && matchesCat;
                         })
-                        .slice(0, 50)
+                        .slice(0, 500)
                         .map((prod: any, idx: number) => (
                           <tr key={prod._id || prod.id || idx} className="hover:bg-[#fafafa]">
                             <td className="py-3 px-6">

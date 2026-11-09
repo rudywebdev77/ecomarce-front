@@ -61,6 +61,33 @@ async function CollectionContent({ params }: PageProps) {
         const tags = (p.tags || []).map((t: string) => t.toLowerCase().trim());
         const infoTitleLower = info.title.toLowerCase().trim();
 
+        const pTitle = (p.title || "").toLowerCase().trim();
+
+        // Specific collection match by category, handle, or tags FIRST
+        const matchesSpecific =
+          cat === infoTitleLower ||
+          cat === cleanHandle ||
+          (cat && (infoTitleLower.includes(cat) || cleanHandle.includes(cat) || cat.includes(cleanHandle))) ||
+          tags.some(
+            (t: string) =>
+              t === infoTitleLower ||
+              t === cleanHandle ||
+              infoTitleLower.includes(t) ||
+              cleanHandle.includes(t) ||
+              (t.length >= 4 && cleanHandle.includes(t.replace(/[^a-z0-9]+/g, "-")))
+          );
+
+        if (matchesSpecific) return true;
+
+        // Distinct keywords match for specific subcollections (e.g. "maahi", "husan ara", "zarqaa", "meeras", "lumiere", "tosha kinari", "opal")
+        const rootWords = cleanHandle
+          .split("-")
+          .filter((w) => w.length >= 4 && !["luxury", "pret", "formal", "formals", "bridal", "birdal", "dresses", "collection", "solids"].includes(w));
+        if (rootWords.length > 0 && rootWords.some((rw) => pTitle.includes(rw) || cat.includes(rw) || tags.some((t: string) => t.includes(rw)))) {
+          return true;
+        }
+
+        // Broad Parent Collections:
         // 1. Sale
         if (cleanHandle === "sale" || cleanHandle === "sale-1") {
           return (
@@ -82,8 +109,8 @@ async function CollectionContent({ params }: PageProps) {
           return p.is_featured === true || tags.some((t: string) => t.includes("best"));
         }
 
-        // 4. Formals
-        if (cleanHandle.includes("formal")) {
+        // 4. Formals (Generic broad collection)
+        if (cleanHandle === "formal-dresses" || cleanHandle === "formals" || cleanHandle === "formal") {
           return (
             cat.includes("formal") ||
             pType.includes("formal") ||
@@ -91,8 +118,8 @@ async function CollectionContent({ params }: PageProps) {
           );
         }
 
-        // 5. Bridals
-        if (cleanHandle.includes("bridal")) {
+        // 5. Bridals (Generic broad collection)
+        if (cleanHandle === "bridal-dresses" || cleanHandle === "bridals" || cleanHandle === "bridal") {
           return (
             cat.includes("bridal") ||
             pType.includes("bridal") ||
@@ -100,8 +127,8 @@ async function CollectionContent({ params }: PageProps) {
           );
         }
 
-        // 6. Pret
-        if (cleanHandle.includes("pret")) {
+        // 6. Pret (Generic broad collection)
+        if (cleanHandle === "pret" || cleanHandle === "luxury-pret") {
           return (
             cat.includes("pret") ||
             pType.includes("pret") ||
@@ -109,21 +136,7 @@ async function CollectionContent({ params }: PageProps) {
           );
         }
 
-        // 7. General collection match by category or tag or handle
-        const matchesCategory =
-          cat === infoTitleLower ||
-          cat === cleanHandle ||
-          (cat && (infoTitleLower.includes(cat) || cleanHandle.includes(cat) || cat.includes(cleanHandle)));
-
-        const matchesTags = tags.some(
-          (t: string) =>
-            t === infoTitleLower ||
-            t === cleanHandle ||
-            infoTitleLower.includes(t) ||
-            cleanHandle.includes(t)
-        );
-
-        return matchesCategory || matchesTags;
+        return false;
       });
 
       liveProducts = matched.map((p) => ({
