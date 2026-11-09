@@ -13,7 +13,6 @@ import SearchModal from "../components/SearchModal";
 import CurrencySwitcher from "../components/CurrencySwitcher";
 import WhatsAppButton from "../components/WhatsAppButton";
 import { API_BASE } from "../lib/api";
-import siteData from "../site_data.json";
 
 function parsePriceToNumber(val: any): number {
   if (typeof val === "number") return isNaN(val) ? 0 : val;
@@ -68,8 +67,27 @@ function AccountContent() {
   const [cancelSuccessMsg, setCancelSuccessMsg] = useState("");
   const [copiedOrderId, setCopiedOrderId] = useState(false);
 
-  const supportWhatsApp = siteData?.storeInfo?.whatsapp || "+92 331 0397865";
-  const rawWhatsApp = supportWhatsApp.replace(/[^0-9]/g, "");
+  const [settings, setSettings] = useState<any>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch(`${API_BASE}/settings`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.settings) {
+          setSettings(data.settings);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const supportWhatsApp = settings?.whatsapp || settings?.store_info?.whatsapp || "";
+  const rawWhatsApp = supportWhatsApp ? supportWhatsApp.replace(/[^0-9]/g, "") : "";
+  const supportPhone = settings?.phone || settings?.store_info?.phone || "";
+  const estimatedDelivery = settings?.estimated_delivery || "3 - 7 Business Days (Worldwide Couture Delivery)";
 
   const handleLogout = () => {
     setToken(null);
@@ -906,7 +924,7 @@ function AccountContent() {
                     <label className="block text-[#444444] font-medium mb-1">Phone Number (Optional)</label>
                     <input
                       type="tel"
-                      placeholder="+92 300 1234567"
+                      placeholder="Phone number"
                       value={authPhone}
                       onChange={(e) => setAuthPhone(e.target.value)}
                       className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none rounded-md bg-white text-black"
@@ -1039,7 +1057,7 @@ function AccountContent() {
           <div className="p-3 bg-[#fafafa] rounded-lg border border-[#f0f0f0]">
             <span className="text-[11px] text-[#888888] uppercase tracking-wider">Default Delivery</span>
             <p className="text-[13px] font-medium text-black mt-1 truncate">
-              {customer?.city || "Pakistan"}
+              {customer?.city || customer?.country || "—"}
             </p>
           </div>
         </div>
@@ -1258,16 +1276,20 @@ function AccountContent() {
 
               {/* Actions Footer */}
               <div className="pt-4 border-t border-[#f0f0f0] flex items-center justify-between flex-wrap gap-3">
-                <a
-                  href={`https://wa.me/${rawWhatsApp}?text=${encodeURIComponent(
-                    `Hello Sillhouete Boutique, I want to inquire about my order ${activeOrder.id}.`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[12px] font-bold text-[#25D366] hover:underline flex items-center gap-1.5"
-                >
-                  <span>💬 Ask Studio via WhatsApp</span>
-                </a>
+                {rawWhatsApp ? (
+                  <a
+                    href={`https://wa.me/${rawWhatsApp}?text=${encodeURIComponent(
+                      `Hello Sillhouete Boutique, I want to inquire about my order ${activeOrder.id}.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[12px] font-bold text-[#25D366] hover:underline flex items-center gap-1.5"
+                  >
+                    <span>💬 Ask Studio via WhatsApp</span>
+                  </a>
+                ) : (
+                  <span />
+                )}
 
                 {!currentStage?.isCancelled && activeOrder.order_status !== "delivered" && (
                   <button
@@ -1294,19 +1316,22 @@ function AccountContent() {
 
                 <div className="divide-y divide-[#f0f0f0]">
                   {activeOrder.items?.map((item: any, idx: number) => {
-                    const itemImg =
-                      item.image ||
-                      item.selectedOptions?.image ||
-                      "https://cdn.shopify.com/s/files/1/0709/7755/2627/files/sillhouete-formal-livia-butter-yellow-intricate-embroidery.jpg?v=1776742288";
+                    const itemImg = item.image || item.selectedOptions?.image || "";
                     return (
                       <div key={idx} className="py-4 flex items-start gap-4">
-                        <div className="w-16 h-20 relative rounded bg-[#f7f7f7] overflow-hidden border border-[#e5e5e5] shrink-0">
-                          <Image
-                            src={itemImg}
-                            alt={item.title || "Product"}
-                            fill
-                            className="object-cover object-top"
-                          />
+                        <div className="w-16 h-20 relative rounded bg-[#f7f7f7] overflow-hidden border border-[#e5e5e5] shrink-0 flex items-center justify-center text-[#9ca3af]">
+                          {itemImg ? (
+                            <Image
+                              src={itemImg}
+                              alt={item.title || "Product"}
+                              fill
+                              className="object-cover object-top"
+                            />
+                          ) : (
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                          )}
                         </div>
 
                         <div className="flex-1 min-w-0">
@@ -1378,7 +1403,8 @@ function AccountContent() {
                     <p>{activeOrder.customer?.address}</p>
                     {activeOrder.customer?.apartment && <p>{activeOrder.customer.apartment}</p>}
                     <p>
-                      {activeOrder.customer?.city}, {activeOrder.customer?.country || "Pakistan"}
+                      {activeOrder.customer?.city ? `${activeOrder.customer.city}, ` : ""}
+                      {activeOrder.customer?.country || ""}
                     </p>
                     {activeOrder.customer?.postal_code && (
                       <p className="font-mono">{activeOrder.customer.postal_code}</p>
@@ -1394,21 +1420,23 @@ function AccountContent() {
                     Estimated Delivery
                   </h4>
                   <p className="text-[#555555]">
-                    {currentStage?.isCancelled ? "Cancelled" : "3 - 7 Business Days (Worldwide Couture Delivery)"}
+                    {currentStage?.isCancelled ? "Cancelled" : estimatedDelivery}
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-[#f0f0f0]">
-                  <h4 className="font-bold text-[12px] uppercase tracking-wider text-black mb-2">
-                    Boutique Helpline
-                  </h4>
-                  <a
-                    href={`tel:${siteData.storeInfo.phone.replace(/[^0-9]/g, "")}`}
-                    className="block text-center py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-black font-bold text-[12px] rounded transition-colors"
-                  >
-                    Call: {siteData.storeInfo.phone}
-                  </a>
-                </div>
+                {supportPhone ? (
+                  <div className="pt-4 border-t border-[#f0f0f0]">
+                    <h4 className="font-bold text-[12px] uppercase tracking-wider text-black mb-2">
+                      Boutique Helpline
+                    </h4>
+                    <a
+                      href={`tel:${supportPhone.replace(/[^0-9]/g, "")}`}
+                      className="block text-center py-2 bg-[#f3f4f6] hover:bg-[#e5e7eb] text-black font-bold text-[12px] rounded transition-colors"
+                    >
+                      Call: {supportPhone}
+                    </a>
+                  </div>
+                ) : null}
               </div>
             </div>
           )}
