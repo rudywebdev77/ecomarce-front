@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import ProductCard, { Product } from "../components/ProductCard";
 import rawProductsData from "../raw_products.json";
 import siteData from "../site_data.json";
+import { API_BASE } from "../lib/api";
 
 interface RawProduct {
   id: number;
@@ -28,11 +29,36 @@ export default function SearchPageClient() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [dbProducts, setDbProducts] = useState<Product[]>([]);
 
-  // Formatted products from raw_products + siteData
+  useEffect(() => {
+    fetch(`${API_BASE}/products?limit=250`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.products && Array.isArray(data.products)) {
+          const mapped: Product[] = data.products.map((p: any) => ({
+            handle: p.handle,
+            title: p.title,
+            link: `/products/${p.handle}`,
+            currentPrice: `Rs.${Number(p.price || 0).toLocaleString()}`,
+            comparePrice: p.compare_at_price ? `Rs.${Number(p.compare_at_price).toLocaleString()}` : null,
+            primaryImage: p.images?.[0] || "https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png",
+            secondaryImage: p.images?.[1] || p.images?.[0] || "https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png",
+            isNew: !!p.is_new,
+            isSale: !!p.is_sale || Boolean(p.compare_at_price),
+            isSoldOut: p.in_stock === false,
+            productType: p.category || p.product_type || "Couture",
+          }));
+          setDbProducts(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Formatted products from db + raw_products + siteData
   const allProducts = useMemo<Product[]>(() => {
-    const list: Product[] = [];
-    const seen = new Set<string>();
+    const list: Product[] = [...dbProducts];
+    const seen = new Set<string>(dbProducts.map((p) => p.handle.toLowerCase()));
 
     // 1. Curated from site_data
     for (const col of siteData.collections) {
@@ -67,7 +93,7 @@ export default function SearchPageClient() {
     }
 
     return list;
-  }, []);
+  }, [dbProducts]);
 
   const results = useMemo(() => {
     const q = searchTerm.toLowerCase().trim();

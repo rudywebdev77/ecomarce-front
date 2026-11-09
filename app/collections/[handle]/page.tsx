@@ -10,6 +10,10 @@ import CurrencySwitcher from "../../components/CurrencySwitcher";
 import WhatsAppButton from "../../components/WhatsAppButton";
 import CollectionClient from "./CollectionClient";
 import { getCollectionData, COLLECTIONS_REGISTRY } from "../../lib/collections";
+import { API_BASE } from "../../lib/api";
+import { Product } from "../../components/ProductCard";
+
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -41,9 +45,119 @@ export async function generateStaticParams() {
 
 async function CollectionContent({ params }: PageProps) {
   const { handle } = await params;
-  const { info, products } = getCollectionData(handle);
+  const cleanHandle = decodeURIComponent(handle).toLowerCase().trim();
+  const { info, products: staticProducts } = getCollectionData(handle);
 
-  return <CollectionClient info={info} initialProducts={products} />;
+  let liveProducts: Product[] = [];
+  try {
+    const res = await fetch(`${API_BASE}/products?limit=500`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      const allDb = (data.products || []) as any[];
+
+      const matched = allDb.filter((p) => {
+        const cat = (p.category || "").toLowerCase().trim();
+        const pType = (p.product_type || "").toLowerCase().trim();
+        const tags = (p.tags || []).map((t: string) => t.toLowerCase().trim());
+        const infoTitleLower = info.title.toLowerCase().trim();
+
+        // 1. Sale
+        if (cleanHandle === "sale" || cleanHandle === "sale-1") {
+          return (
+            cat.includes("sale") ||
+            pType.includes("sale") ||
+            tags.some((t: string) => t.includes("sale")) ||
+            p.is_sale === true ||
+            Boolean(p.compare_at_price)
+          );
+        }
+
+        // 2. New Arrivals
+        if (cleanHandle === "new-arrivals") {
+          return p.is_new === true || tags.some((t: string) => t.includes("new"));
+        }
+
+        // 3. Best Sellers
+        if (cleanHandle === "best-sellers") {
+          return p.is_featured === true || tags.some((t: string) => t.includes("best"));
+        }
+
+        // 4. Formals
+        if (cleanHandle.includes("formal")) {
+          return (
+            cat.includes("formal") ||
+            pType.includes("formal") ||
+            tags.some((t: string) => t.includes("formal"))
+          );
+        }
+
+        // 5. Bridals
+        if (cleanHandle.includes("bridal")) {
+          return (
+            cat.includes("bridal") ||
+            pType.includes("bridal") ||
+            tags.some((t: string) => t.includes("bridal"))
+          );
+        }
+
+        // 6. Pret
+        if (cleanHandle.includes("pret")) {
+          return (
+            cat.includes("pret") ||
+            pType.includes("pret") ||
+            tags.some((t: string) => t.includes("pret"))
+          );
+        }
+
+        // 7. General collection match by category or tag or handle
+        const matchesCategory =
+          cat === infoTitleLower ||
+          cat === cleanHandle ||
+          (cat && (infoTitleLower.includes(cat) || cleanHandle.includes(cat) || cat.includes(cleanHandle)));
+
+        const matchesTags = tags.some(
+          (t: string) =>
+            t === infoTitleLower ||
+            t === cleanHandle ||
+            infoTitleLower.includes(t) ||
+            cleanHandle.includes(t)
+        );
+
+        return matchesCategory || matchesTags;
+      });
+
+      liveProducts = matched.map((p) => ({
+        handle: p.handle,
+        title: p.title,
+        link: `/products/${p.handle}`,
+        currentPrice: `Rs.${Number(p.price || 0).toLocaleString()}`,
+        comparePrice: p.compare_at_price ? `Rs.${Number(p.compare_at_price).toLocaleString()}` : null,
+        isNew: !!p.is_new,
+        isSale: !!p.is_sale || Boolean(p.compare_at_price) || cleanHandle.includes("sale"),
+        isSoldOut: p.in_stock === false,
+        primaryImage: p.images?.[0] || "https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png",
+        secondaryImage: p.images?.[1] || p.images?.[0] || "https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png",
+        extraImages: p.images?.slice(2) || [],
+        productType: p.category || p.product_type || info.title,
+        createdAt: p.created_at,
+      }));
+    }
+  } catch {
+    // If backend fails, fallback gracefully to static products
+  }
+
+  // Prepend live products from database so newly added outfits appear at the very front
+  const combined: Product[] = [...liveProducts];
+  const seenHandles = new Set(liveProducts.map((p) => p.handle.toLowerCase()));
+
+  for (const p of staticProducts) {
+    if (!seenHandles.has(p.handle.toLowerCase())) {
+      seenHandles.add(p.handle.toLowerCase());
+      combined.push(p);
+    }
+  }
+
+  return <CollectionClient info={info} initialProducts={combined} />;
 }
 
 export default function CollectionPage({ params }: PageProps) {

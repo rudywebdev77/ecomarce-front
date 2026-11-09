@@ -1,10 +1,12 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import AnnouncementBar from "../components/AnnouncementBar";
 import { API_BASE } from "../lib/api";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "News & Style Journal – Sillhouete",
@@ -17,7 +19,7 @@ async function getBlogs() {
     if (!res.ok) throw new Error("Failed fetching blogs");
     const data = await res.json();
     return data.blogs || [];
-  } catch (err) {
+  } catch {
     console.warn("Could not fetch blogs from API, using fallback data.");
     return [
       {
@@ -54,9 +56,91 @@ async function getBlogs() {
   }
 }
 
-export default async function BlogsPage() {
+function BlogListSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="animate-pulse bg-white border border-[#f0f0f0] overflow-hidden">
+          <div className="h-[320px] bg-[#f3f4f6]" />
+          <div className="p-6 space-y-3">
+            <div className="h-4 bg-[#e5e7eb] rounded w-1/3" />
+            <div className="h-6 bg-[#e5e7eb] rounded w-3/4" />
+            <div className="h-4 bg-[#e5e7eb] rounded w-full" />
+            <div className="h-4 bg-[#e5e7eb] rounded w-2/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+async function BlogList() {
   const blogs = await getBlogs();
 
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+      {blogs.map((blog: any, idx: number) => (
+        <article
+          key={blog._id || blog.id || idx}
+          className="group flex flex-col bg-white border border-[#f0f0f0] overflow-hidden hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-all"
+        >
+          <Link href={`/blogs/${blog.handle}`} className="relative h-[320px] w-full overflow-hidden bg-[#fafafa] block">
+            {blog.featured_image ? (
+              <Image
+                src={blog.featured_image}
+                alt={blog.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#999]">Sillhouete</div>
+            )}
+          </Link>
+
+          <div className="p-6 flex-1 flex flex-col">
+            <div className="flex items-center gap-2 mb-2">
+              {blog.tags && blog.tags[0] && (
+                <span className="text-[11px] font-sans-custom uppercase tracking-widest text-[#888888]">
+                  {blog.tags[0]}
+                </span>
+              )}
+              <span className="text-[#cccccc]">•</span>
+              <span className="text-[11px] font-sans-custom text-[#888888]">
+                {blog.published_at || blog.created_at
+                  ? new Date(blog.published_at || blog.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "Recent"}
+              </span>
+            </div>
+
+            <h2 className="text-[18px] font-medium leading-snug text-[#111111] group-hover:text-[#555555] transition-colors mb-3">
+              <Link href={`/blogs/${blog.handle}`}>{blog.title}</Link>
+            </h2>
+
+            <p className="text-[13px] font-sans-custom text-[#666666] leading-relaxed line-clamp-3 mb-4 flex-1">
+              {blog.excerpt}
+            </p>
+
+            <div className="pt-2">
+              <Link
+                href={`/blogs/${blog.handle}`}
+                className="inline-block text-[12px] font-sans-custom font-bold uppercase tracking-[0.2em] text-[#111111] border-b border-black pb-0.5 hover:text-[#555555] hover:border-[#555555] transition-colors"
+              >
+                Read Story →
+              </Link>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+export default function BlogsPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col font-serif text-[#111111]">
       <AnnouncementBar />
@@ -72,63 +156,9 @@ export default async function BlogsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-          {blogs.map((blog: any, idx: number) => (
-            <article
-              key={blog._id || blog.id || idx}
-              className="group flex flex-col bg-white border border-[#f0f0f0] overflow-hidden hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-all"
-            >
-              <Link href={`/blogs/${blog.handle}`} className="relative h-[320px] w-full overflow-hidden bg-[#fafafa] block">
-                {blog.featured_image ? (
-                  <Image
-                    src={blog.featured_image}
-                    alt={blog.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#999]">Sillhouete</div>
-                )}
-              </Link>
-
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-center gap-2 mb-2">
-                  {blog.tags && blog.tags[0] && (
-                    <span className="text-[11px] font-sans-custom uppercase tracking-widest text-[#888888]">
-                      {blog.tags[0]}
-                    </span>
-                  )}
-                  <span className="text-[#cccccc]">•</span>
-                  <span className="text-[11px] font-sans-custom text-[#888888]">
-                    {new Date(blog.published_at || blog.created_at || Date.now()).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-
-                <h2 className="text-[18px] font-medium leading-snug text-[#111111] group-hover:text-[#555555] transition-colors mb-3">
-                  <Link href={`/blogs/${blog.handle}`}>{blog.title}</Link>
-                </h2>
-
-                <p className="text-[13px] font-sans-custom text-[#666666] leading-relaxed line-clamp-3 mb-4 flex-1">
-                  {blog.excerpt}
-                </p>
-
-                <div className="pt-2">
-                  <Link
-                    href={`/blogs/${blog.handle}`}
-                    className="inline-block text-[12px] font-sans-custom font-bold uppercase tracking-[0.2em] text-[#111111] border-b border-black pb-0.5 hover:text-[#555555] hover:border-[#555555] transition-colors"
-                  >
-                    Read Story →
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+        <Suspense fallback={<BlogListSkeleton />}>
+          <BlogList />
+        </Suspense>
       </main>
 
       <Footer />

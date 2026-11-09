@@ -1,39 +1,47 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { useStore, formatPrice, formatNumberAmount } from "../store/useStore";
+import { useStore, parsePriceToNumber } from "../store/useStore";
 import { API_BASE } from "../lib/api";
-import siteData from "../site_data.json";
+
+function formatShopifyPrice(amount: number): string {
+  return `Rs ${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, currentCurrency, clearCart } = useStore();
 
-  // Form states
+  // Contact States
   const [email, setEmail] = useState("");
+  const [emailOffers, setEmailOffers] = useState(true);
+
+  // Delivery States
+  const [country, setCountry] = useState("Pakistan");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [apartment, setApartment] = useState("");
-  const [city, setCity] = useState("Lahore");
-  const [stateRegion, setStateRegion] = useState("Punjab");
+  const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("Pakistan");
-  const [notes, setNotes] = useState("");
+  const [phone, setPhone] = useState("");
+  const [saveInfo, setSaveInfo] = useState(false);
 
-  // Shipping
-  const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
+  // Payment Selection
+  const [paymentOption, setPaymentOption] = useState<"credit_card">("credit_card");
 
-  // Payment
-  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "cod" | "bank_transfer">("stripe");
+  // Card fields
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvc, setCardCvc] = useState("");
-  const [cardName, setCardName] = useState("");
+  const [cardName, _setCardName] = useState("");
 
   // Coupon
   const [couponCode, setCouponCode] = useState("");
@@ -41,810 +49,960 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
 
-  // Loading & error
+  // Stripe Dahlia Checkout Form SDK states & refs
+  const [stripeScriptLoaded, setStripeScriptLoaded] = useState(false);
+  const [stripeReady, setStripeReady] = useState(false);
+  const checkoutFormRef = useRef<any>(null);
+  const actionsRef = useRef<any>(null);
+  const formContainerRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef<string>("");
+  const customerRef = useRef<any>({});
+  const prefetchedSessionRef = useRef<Promise<{client_secret: string; sessionId: string}> | null>(null);
+
+  useEffect(() => {
+    customerRef.current = {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      phone,
+      address,
+      apartment,
+      city,
+      country,
+      postal_code: postalCode,
+    };
+  }, [firstName, lastName, email, phone, address, apartment, city, country, postalCode]);
+
+  // UI state
+  const [showItemDetails, setShowItemDetails] = useState(true);
+  const [showMobileSummary, setShowMobileSummary] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
 
-  // Calculation
-  const subtotalPKR = cart.reduce((sum, item) => {
-    const priceNum = parseFloat(item.price.replace(/[^0-9.]/g, "")) || 0;
-    return sum + priceNum * item.quantity;
+  // Items to display: real cart or realistic Sillhouete default from live site
+  const items =
+    cart.length > 0
+      ? cart
+      : [
+          {
+            id: "bella-xs-sample",
+            title: "Bella",
+            size: "XS",
+            quantity: 1,
+            price: "Rs 31,500.00",
+            raw_price: 31500,
+            image:
+              "https://cdn.shopify.com/s/files/1/0709/7755/2627/files/sillhouete-formal-dress-sublime-Lilac-intricate-embroidery.jpg?v=1776332402",
+            color: "None",
+            sleeves: "Same as sample",
+          },
+        ];
+
+  // Price calculations
+  const subtotalPKR = items.reduce((sum, item: any) => {
+    let p = parsePriceToNumber(item.price || item.raw_price);
+    if (!p || p < 10) p = 31500;
+    return sum + p * (item.quantity || 1);
   }, 0);
 
-  const shippingFeePKR = country === "Pakistan"
-    ? (shippingMethod === "express" ? 1500 : 0)
-    : (shippingMethod === "express" ? 8500 : 5000);
-
+  const shippingFeePKR = 0; // Standard Free Shipping as in official screenshot
   const discountAmountPKR = Math.round((subtotalPKR * discountPercent) / 100);
   const totalPKR = Math.max(0, subtotalPKR + shippingFeePKR - discountAmountPKR);
 
-  // Apply Coupon
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError("");
-    setCouponSuccess("");
-    const code = couponCode.trim().toUpperCase();
-    if (code === "SILLHOUETE10" || code === "WELCOME10") {
-      setDiscountPercent(10);
-      setCouponSuccess("10% promotional discount applied!");
-    } else if (code === "BRIDAL20") {
-      setDiscountPercent(20);
-      setCouponSuccess("20% bridal discount applied!");
-    } else {
-      setCouponError("Invalid promo code. Try 'SILLHOUETE10'");
-    }
-  };
-
   // Card formatting
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const _handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
     const formatted = raw.replace(/(\d{4})/g, "$1 ").trim();
     setCardNumber(formatted);
   };
 
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const _handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let raw = e.target.value.replace(/\D/g, "").slice(0, 4);
     if (raw.length >= 3) {
-      raw = `${raw.slice(0, 2)}/${raw.slice(2, 4)}`;
+      raw = `${raw.slice(0, 2)} / ${raw.slice(2, 4)}`;
     }
     setCardExpiry(raw);
   };
 
-  const handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const _handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "").slice(0, 4);
     setCardCvc(raw);
   };
 
-  // Card brand detection
-  const getCardBrand = (num: string) => {
-    const clean = num.replace(/\s/g, "");
-    if (clean.startsWith("4")) return "VISA";
-    if (/^5[1-5]/.test(clean) || /^2[2-7]/.test(clean)) return "MASTERCARD";
-    if (/^3[47]/.test(clean)) return "AMEX";
-    if (/^6/.test(clean)) return "DISCOVER";
-    return "";
+  // Coupon handler (checks database settings with fallback)
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCouponError("");
+    setCouponSuccess("");
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/settings/discount-codes`);
+      if (res.ok) {
+        const data = await res.json();
+        const found = (data.discount_codes || []).find(
+          (c: any) => c.code?.toUpperCase() === code && c.active !== false
+        );
+        if (found) {
+          setDiscountPercent(Number(found.discount_percent));
+          setCouponSuccess(
+            `${found.discount_percent}% discount applied!${found.description ? ` (${found.description})` : ""}`
+          );
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not query dynamic discount codes:", err);
+    }
+
+    // Fallback checks
+    if (code === "SILLHOUETE10" || code === "WELCOME10") {
+      setDiscountPercent(10);
+      setCouponSuccess("10% discount applied!");
+    } else if (code === "BRIDAL20") {
+      setDiscountPercent(20);
+      setCouponSuccess("20% bridal discount applied!");
+    } else {
+      setCouponError("Enter a valid discount code");
+    }
   };
 
-  // Form Submission
+  // Pre-fetch Stripe session in parallel with script loading (cuts ~1s off loading)
+  useEffect(() => {
+    if (paymentOption !== "credit_card" || totalPKR <= 0) return;
+    const cacheKey = `sil_dahlia_${totalPKR}_${(currentCurrency || "PKR").toLowerCase()}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) return; // already cached, no need to pre-fetch
+    } catch {}
+
+    // Start fetching session early so it's ready when script loads
+    prefetchedSessionRef.current = fetch(`${API_BASE}/payments/create-checkout-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: totalPKR,
+        currency: (currentCurrency || "PKR").toLowerCase(),
+        customer: {
+          first_name: firstName || "Customer",
+          last_name: lastName || "",
+          email: email || "customer@example.com",
+          phone,
+          address,
+          city,
+        },
+        items,
+        subtotal: subtotalPKR,
+        shipping_fee: shippingFeePKR,
+        discount: discountAmountPKR,
+        total: totalPKR,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const result = { client_secret: data.client_secret || "", sessionId: data.sessionId || "" };
+        try {
+          if (result.client_secret) {
+            sessionStorage.setItem(cacheKey, result.client_secret);
+            if (result.sessionId) sessionStorage.setItem(`${cacheKey}_id`, result.sessionId);
+          }
+        } catch {}
+        return result;
+      })
+      .catch(() => ({ client_secret: "", sessionId: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentOption, totalPKR]);
+
+  // Initialize Official Stripe Dahlia Checkout Form SDK (with instant session cache)
+  useEffect(() => {
+    if (paymentOption !== "credit_card") return;
+
+    let isMounted = true;
+
+    async function initDahlia() {
+      if (typeof window === "undefined") return;
+      const StripeConstructor = (window as any).Stripe;
+      if (!StripeConstructor) return;
+
+      try {
+        const pubKey =
+          process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+          "pk_test_51UXa0rRw0xKXArPAVIU4r52Vy8hYzi8i1UrqgtTZt0iLAukBO2yLbGfi1KguWjIigB7KlZTcHj9OKJM7rGGTwMGL00aCCo9rFP";
+
+        const stripeObj = StripeConstructor(pubKey);
+
+        // Check sessionStorage cache to eliminate refresh loading delay
+        const cacheKey = `sil_dahlia_${totalPKR}_${(currentCurrency || "PKR").toLowerCase()}`;
+        let clientSecret = "";
+        let sessionId = "";
+        try {
+          clientSecret = sessionStorage.getItem(cacheKey) || "";
+          sessionId = sessionStorage.getItem(`${cacheKey}_id`) || "";
+        } catch {}
+
+        if (!clientSecret) {
+          // Use pre-fetched session if available (started in parallel with script load)
+          if (prefetchedSessionRef.current) {
+            const prefetched = await prefetchedSessionRef.current;
+            prefetchedSessionRef.current = null;
+            if (prefetched.client_secret) {
+              clientSecret = prefetched.client_secret;
+              sessionId = prefetched.sessionId;
+            }
+          }
+        }
+
+        if (!clientSecret) {
+          const res = await fetch(`${API_BASE}/payments/create-checkout-session`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: totalPKR,
+              currency: (currentCurrency || "PKR").toLowerCase(),
+              customer: {
+                first_name: firstName || "Customer",
+                last_name: lastName || "",
+                email: email || "customer@example.com",
+                phone,
+                address,
+                city,
+              },
+              items,
+              subtotal: subtotalPKR,
+              shipping_fee: shippingFeePKR,
+              discount: discountAmountPKR,
+              total: totalPKR,
+            }),
+          });
+
+          const data = await res.json();
+          if (!data.client_secret || !isMounted) return;
+          clientSecret = data.client_secret;
+          sessionId = data.sessionId || "";
+          try {
+            sessionStorage.setItem(cacheKey, clientSecret);
+            if (sessionId) sessionStorage.setItem(`${cacheKey}_id`, sessionId);
+          } catch {}
+        }
+
+        if (!isMounted) return;
+        sessionIdRef.current = sessionId;
+
+        const appearance = {
+          theme: "stripe",
+          inputs: "spaced",
+          labels: "auto",
+          variables: {
+            borderRadius: "4px",
+            colorBackground: "#ffffff",
+            colorDanger: "#df1b41",
+            colorPrimary: "#0570de",
+            colorSuccess: "#00c853",
+            colorText: "#30313d",
+            fontFamily: "default",
+            fontSizeBase: "14px",
+            spacingUnit: "4px",
+          },
+        };
+
+        if (stripeObj.initCheckoutFormSdk) {
+          const checkout = stripeObj.initCheckoutFormSdk({
+            clientSecret,
+            appearance,
+          });
+
+          if (formContainerRef.current && isMounted) {
+            if (checkoutFormRef.current?.unmount) {
+              try {
+                checkoutFormRef.current.unmount();
+              } catch {}
+            }
+
+            const form = checkout.createForm({
+              layout: "expanded",
+              __paymentElementOptions: {
+                fields: {
+                  billingDetails: {
+                    address: {
+                      country: "never",
+                      postalCode: "never",
+                    },
+                  },
+                },
+              },
+            });
+            form.mount("#checkout-form");
+            checkoutFormRef.current = form;
+            setStripeReady(true);
+
+            const loadActionsResult = await checkout.loadActions();
+            if (loadActionsResult.type === "success") {
+              actionsRef.current = loadActionsResult.actions;
+              form.on("confirm", (event: any) => {
+                if (sessionIdRef.current) {
+                  fetch(`${API_BASE}/payments/update-session-customer`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      sessionId: sessionIdRef.current,
+                      customer: customerRef.current,
+                    }),
+                  }).catch(() => {});
+                }
+                loadActionsResult.actions.confirm({ formConfirmEvent: event });
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Stripe Checkout Form SDK notice:", err);
+      }
+    }
+
+    initDahlia();
+
+    return () => {
+      isMounted = false;
+      if (checkoutFormRef.current?.unmount) {
+        try {
+          checkoutFormRef.current.unmount();
+        } catch {}
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentOption, totalPKR, stripeScriptLoaded]);
+
+  // Hide Stripe floating badge via DOM observer
+  useEffect(() => {
+    function hideStripeBadge() {
+      document.querySelectorAll('iframe[src*="stripe.com"], iframe[name*="stripe"]').forEach((el) => {
+        const s = window.getComputedStyle(el.parentElement || el);
+        if (s.position === "fixed" || s.position === "absolute") {
+          (el as HTMLElement).style.display = "none";
+          if (el.parentElement) (el.parentElement as HTMLElement).style.display = "none";
+        }
+      });
+      document.querySelectorAll("body > div, body > iframe, body > a").forEach((el) => {
+        const s = window.getComputedStyle(el);
+        if (s.position === "fixed" || s.position === "absolute") {
+          const html = el.innerHTML || "";
+          const src = el.getAttribute("src") || "";
+          if (html.includes("stripe") || src.includes("stripe")) {
+            (el as HTMLElement).style.display = "none";
+          }
+        }
+      });
+    }
+    hideStripeBadge();
+    const observer = new MutationObserver(() => hideStripeBadge());
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [stripeReady]);
+
+  // Order Submission
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setCheckoutError("");
 
-    if (cart.length === 0) {
-      setCheckoutError("Your cart is empty. Please add items before checking out.");
+    if (!email || !address || !city) {
+      setCheckoutError("Please enter your contact and delivery address details.");
       return;
     }
 
-    if (!email || !firstName || !address || !city) {
-      setCheckoutError("Please fill out all required contact and shipping fields.");
+    if (actionsRef.current?.confirm) {
+      actionsRef.current.confirm();
       return;
-    }
-
-    if (paymentMethod === "stripe") {
-      const cleanCard = cardNumber.replace(/\s/g, "");
-      if (cleanCard.length < 15 || !cardExpiry || !cardCvc || !cardName) {
-        setCheckoutError("Please provide complete credit or debit card details.");
-        return;
-      }
     }
 
     setIsProcessing(true);
 
     try {
       const customerData = {
-        first_name: firstName,
-        last_name: lastName,
+        first_name: firstName || "Customer",
+        last_name: lastName || "",
         email,
         phone,
         address,
         apartment,
         city,
-        state: stateRegion,
-        postal_code: postalCode,
         country,
+        postal_code: postalCode,
       };
 
       const orderPayload = {
         customer: customerData,
-        items: cart.map((i) => ({
-          id: i.id,
-          title: i.title,
-          price: i.price,
-          raw_price: parseFloat(i.price.replace(/[^0-9.]/g, "")) || 0,
-          quantity: i.quantity,
-          size: i.size || "M",
-          image: i.image,
-        })),
+        items: items.map((i: any) => {
+          const numPrice = parsePriceToNumber(i.price || i.raw_price) || 31500;
+          return {
+            id: i.id,
+            title: i.title,
+            price: `Rs.${numPrice.toLocaleString()}`,
+            raw_price: numPrice,
+            quantity: i.quantity || 1,
+            size: i.size || "Standard",
+            image: i.image,
+          };
+        }),
         subtotal: subtotalPKR,
         shipping_fee: shippingFeePKR,
         discount: discountAmountPKR,
         total: totalPKR,
         currency: currentCurrency || "PKR",
-        shipping_method: shippingMethod === "express" ? "Express Courier" : "Standard Delivery",
-        notes,
+        shipping_method: "Standard Free Delivery",
       };
 
-      if (paymentMethod === "stripe") {
-        // 1. Initialize Payment Intent via backend Stripe endpoint
-        const intentRes = await fetch(`${API_BASE}/payments/create-intent`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: totalPKR,
-            currency: currentCurrency.toLowerCase() === "pkr" ? "usd" : currentCurrency.toLowerCase(),
-            customer: customerData,
-            items: cart,
-          }),
-        });
+      const intentRes = await fetch(`${API_BASE}/payments/create-intent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: totalPKR,
+          currency: (currentCurrency || "PKR").toLowerCase(),
+          customer: customerData,
+          card: {
+            number: cardNumber,
+            expiry: cardExpiry,
+            cvc: cardCvc,
+            name: cardName,
+          },
+          items,
+        }),
+      });
 
-        const intentData = await intentRes.json();
-        if (!intentRes.ok) {
-          throw new Error(intentData.error || "Failed to initialize card payment");
-        }
-
-        // 2. Direct on-site confirmation of Stripe payment with the backend
-        const confirmRes = await fetch(`${API_BASE}/payments/confirm`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            paymentIntentId: intentData.paymentIntentId,
-            ...orderPayload,
-          }),
-        });
-
-        const confirmData = await confirmRes.json();
-        if (!confirmRes.ok) {
-          throw new Error(confirmData.error || "Failed to complete card payment transaction");
-        }
-
-        clearCart();
-        router.push(
-          `/order-success?orderId=${confirmData.order.id}&number=${confirmData.order.order_number}&email=${encodeURIComponent(
-            email
-          )}&total=${totalPKR}&method=stripe`
-        );
-      } else {
-        // COD or Bank Transfer
-        const res = await fetch(`${API_BASE}/orders`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...orderPayload,
-            payment_method: paymentMethod,
-            payment_status: "pending",
-          }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to place order");
-        }
-
-        clearCart();
-        router.push(
-          `/order-success?orderId=${data.order.id}&number=${data.order.order_number}&email=${encodeURIComponent(
-            email
-          )}&total=${totalPKR}&method=${paymentMethod}`
-        );
+      const intentData = await intentRes.json();
+      if (!intentRes.ok) {
+        throw new Error(intentData.error || "Failed to initialize card transaction");
       }
+
+      const confirmRes = await fetch(`${API_BASE}/payments/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentIntentId: intentData.paymentIntentId,
+          ...orderPayload,
+        }),
+      });
+
+      const confirmData = await confirmRes.json();
+      if (!confirmRes.ok) {
+        throw new Error(confirmData.error || "Payment transaction could not be processed");
+      }
+
+      clearCart();
+      router.push(
+        `/order-success?orderId=${confirmData.order.id}&number=${confirmData.order.order_number}&email=${encodeURIComponent(
+          email
+        )}&total=${totalPKR}&method=stripe`
+      );
     } catch (err: any) {
-      console.error("Checkout submission failed:", err);
+      console.error("Order error:", err);
       setCheckoutError(err.message || "An error occurred during checkout. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#fafafa] font-serif text-[#111111]">
-      {/* Top Brand Header */}
-      <header className="border-b border-[#e8e8e1] bg-white">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
-          <Link href="/" className="inline-block">
-            <Image
-              src={siteData.storeInfo.logo}
-              alt={siteData.storeInfo.name}
-              width={200}
-              height={40}
-              className="h-[38px] w-auto object-contain"
-              priority
-            />
-          </Link>
-          <div className="flex items-center gap-3 text-[12px] font-sans-custom uppercase tracking-[0.1em] text-[#666666]">
-            <span className="flex items-center gap-1.5 text-emerald-700">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              Secure 256-Bit SSL Checkout
-            </span>
-            <span className="hidden sm:inline text-[#cccccc]">|</span>
-            <Link href="/cart" className="hidden sm:inline hover:text-black hover:underline">
-              Return to Bag
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        {cart.length === 0 ? (
-          <div className="bg-white p-12 text-center border border-[#e8e8e1] max-w-[600px] mx-auto space-y-4">
-            <h2 className="text-[24px] uppercase tracking-wider font-semibold">Your Shopping Bag is Empty</h2>
-            <p className="text-[14px] text-[#666666] font-sans-custom">
-              You don&apos;t have any dresses in your bag yet.
-            </p>
-            <div className="pt-4">
-              <Link
-                href="/collections/all"
-                className="inline-block bg-black text-white px-8 py-3.5 text-[12px] font-bold uppercase tracking-[0.2em] hover:bg-[#222222]"
-              >
-                Explore Collections
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmitOrder}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-              {/* ========================================================= */}
-              {/* LEFT COLUMN: Customer, Shipping & Payment Form (7 cols)  */}
-              {/* ========================================================= */}
-              <div className="lg:col-span-7 space-y-8">
-                {checkoutError && (
-                  <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-[13px] font-sans-custom">
-                    ⚠️ {checkoutError}
-                  </div>
-                )}
-
-                {/* 1. Contact Information */}
-                <div className="bg-white p-6 sm:p-8 border border-[#e8e8e1]">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-[15px] font-bold uppercase tracking-[0.15em] text-[#111111]">
-                      1. Contact Information
-                    </h2>
-                    <Link href="/account" className="text-[12px] text-[#666666] hover:text-black underline font-sans-custom">
-                      Sign in for faster checkout
-                    </Link>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-sans-custom text-[13px]">
-                    <div className="sm:col-span-2">
-                      <label className="block text-[#444444] mb-1 font-medium">Email Address *</label>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                      <span className="text-[11px] text-[#777777] mt-1 block">
-                        We will send order confirmation and tracking details to this email.
-                      </span>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[#444444] mb-1 font-medium">Phone / WhatsApp Number *</label>
-                      <input
-                        type="tel"
-                        required
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+92 300 1234567 or +1 217 555 0199"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                  </div>
+  /* ------------------------------------------------------------------ */
+  /* Reusable: Order Summary Content (used in both mobile & desktop)    */
+  /* ------------------------------------------------------------------ */
+  const renderOrderSummary = () => (
+    <>
+      {/* Cart Items List */}
+      {items.map((item: any, idx: number) => {
+        const p = parsePriceToNumber(item.price || item.raw_price) || 31500;
+        return (
+          <div key={item.id || idx} className="space-y-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                {/* Thumbnail with quantity badge */}
+                <div className="w-14 h-16 relative bg-white rounded-md border border-[#e5e5e5] shrink-0 overflow-visible shadow-2xs">
+                  {item.image && (
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      className="object-cover rounded-md"
+                      sizes="56px"
+                      unoptimized
+                    />
+                  )}
+                  <span className="absolute -top-2 -right-2 bg-[#707070] text-white text-[11px] font-medium w-5 h-5 rounded-full flex items-center justify-center z-10 shadow-2xs">
+                    {item.quantity || 1}
+                  </span>
                 </div>
 
-                {/* 2. Delivery Address */}
-                <div className="bg-white p-6 sm:p-8 border border-[#e8e8e1]">
-                  <h2 className="text-[15px] font-bold uppercase tracking-[0.15em] text-[#111111] mb-4">
-                    2. Delivery Address
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-sans-custom text-[13px]">
-                    <div>
-                      <label className="block text-[#444444] mb-1 font-medium">First Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="First name"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[#444444] mb-1 font-medium">Last Name</label>
-                      <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Last name"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[#444444] mb-1 font-medium">Country / Region *</label>
-                      <select
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      >
-                        <option value="Pakistan">Pakistan (Domestic Delivery)</option>
-                        <option value="United States">United States</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                        <option value="Canada">Canada</option>
-                        <option value="United Arab Emirates">United Arab Emirates</option>
-                        <option value="Saudi Arabia">Saudi Arabia</option>
-                        <option value="Australia">Australia</option>
-                        <option value="Germany">Germany</option>
-                        <option value="Other">Other Worldwide</option>
-                      </select>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="block text-[#444444] mb-1 font-medium">Street Address *</label>
-                      <input
-                        type="text"
-                        required
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="House / Street / Road / Phase"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[#444444] mb-1 font-medium">Apartment, suite, etc. (optional)</label>
-                      <input
-                        type="text"
-                        value={apartment}
-                        onChange={(e) => setApartment(e.target.value)}
-                        placeholder="Apt, Suite, Floor"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[#444444] mb-1 font-medium">City *</label>
-                      <input
-                        type="text"
-                        required
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="City (e.g. Lahore, Karachi, London, New York)"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[#444444] mb-1 font-medium">State / Province</label>
-                      <input
-                        type="text"
-                        value={stateRegion}
-                        onChange={(e) => setStateRegion(e.target.value)}
-                        placeholder="Punjab, Sindh, State"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[#444444] mb-1 font-medium">Postal / Zip Code</label>
-                      <input
-                        type="text"
-                        value={postalCode}
-                        onChange={(e) => setPostalCode(e.target.value)}
-                        placeholder="54000"
-                        className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Shipping Method */}
-                <div className="bg-white p-6 sm:p-8 border border-[#e8e8e1]">
-                  <h2 className="text-[15px] font-bold uppercase tracking-[0.15em] text-[#111111] mb-4">
-                    3. Shipping Method
-                  </h2>
-                  <div className="space-y-3 font-sans-custom text-[13px]">
-                    <label
-                      className={`flex items-center justify-between p-3.5 border cursor-pointer transition-colors ${
-                        shippingMethod === "standard" ? "border-black bg-[#fcfcfc]" : "border-[#e0e0e0] hover:border-[#aaa]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="shipping_method"
-                          checked={shippingMethod === "standard"}
-                          onChange={() => setShippingMethod("standard")}
-                          className="accent-black"
-                        />
-                        <div>
-                          <p className="font-semibold text-black">Standard Courier Delivery</p>
-                          <p className="text-[12px] text-[#666666]">
-                            {country === "Pakistan" ? "3 to 5 business days" : "7 to 10 business days international"}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="font-semibold text-black">
-                        {country === "Pakistan" ? "FREE" : formatNumberAmount(5000, currentCurrency)}
-                      </span>
-                    </label>
-
-                    <label
-                      className={`flex items-center justify-between p-3.5 border cursor-pointer transition-colors ${
-                        shippingMethod === "express" ? "border-black bg-[#fcfcfc]" : "border-[#e0e0e0] hover:border-[#aaa]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="shipping_method"
-                          checked={shippingMethod === "express"}
-                          onChange={() => setShippingMethod("express")}
-                          className="accent-black"
-                        />
-                        <div>
-                          <p className="font-semibold text-black">
-                            {country === "Pakistan" ? "TCS Urgent Overnight" : "DHL Express Priority (Worldwide)"}
-                          </p>
-                          <p className="text-[12px] text-[#666666]">
-                            {country === "Pakistan" ? "1 to 2 business days" : "3 to 5 business days worldwide"}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="font-semibold text-black">
-                        {country === "Pakistan" ? formatNumberAmount(1500, currentCurrency) : formatNumberAmount(8500, currentCurrency)}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* 4. Payment Method - DIRECT STRIPE ON-SITE */}
-                <div className="bg-white p-6 sm:p-8 border border-[#e8e8e1]">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-[15px] font-bold uppercase tracking-[0.15em] text-[#111111]">
-                      4. Payment
-                    </h2>
-                    <span className="text-[11px] font-sans-custom uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 border border-emerald-200">
-                      Encrypted Direct Checkout
-                    </span>
-                  </div>
-
-                  <p className="text-[13px] text-[#666666] font-sans-custom mb-4">
-                    All transactions are secure and encrypted. Enter your payment details directly below:
+                {/* Item Details */}
+                <div>
+                  <p className="text-[14px] font-medium text-[#111111] leading-tight">
+                    {item.title}
+                  </p>
+                  <p className="text-[12px] text-[#707070] mt-0.5">
+                    {item.size || "XS"} / {item.color || "None"} / None
+                  </p>
+                  <p className="text-[12px] text-[#707070]">
+                    Sleeves: {item.sleeves || "Same as sample"}
                   </p>
 
-                  <div className="space-y-4">
-                    {/* Stripe Card Payment Option */}
-                    <div
-                      className={`border p-4 transition-all ${
-                        paymentMethod === "stripe" ? "border-black bg-[#fafafa]" : "border-[#e0e0e0]"
-                      }`}
-                    >
-                      <label className="flex items-center justify-between cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="payment_method"
-                            checked={paymentMethod === "stripe"}
-                            onChange={() => setPaymentMethod("stripe")}
-                            className="accent-black"
-                          />
-                          <span className="font-semibold text-[14px]">Credit / Debit Card (Stripe)</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] bg-[#142FBD] text-white font-bold px-1.5 py-0.5 rounded-sm">VISA</span>
-                          <span className="text-[10px] bg-[#EB001B] text-white font-bold px-1.5 py-0.5 rounded-sm">MC</span>
-                          <span className="text-[10px] bg-[#016FD0] text-white font-bold px-1.5 py-0.5 rounded-sm">AMEX</span>
-                        </div>
-                      </label>
-
-                      {/* DIRECT EMBEDDED STRIPE CARD FIELDS */}
-                      {paymentMethod === "stripe" && (
-                        <div className="mt-5 pt-5 border-t border-[#e8e8e1] space-y-4 font-sans-custom text-[13px]">
-                          <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <label className="text-[#444444] font-medium">Card Number *</label>
-                              {getCardBrand(cardNumber) && (
-                                <span className="text-[11px] font-bold text-black uppercase tracking-wider">
-                                  {getCardBrand(cardNumber)}
-                                </span>
-                              )}
-                            </div>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                maxLength={19}
-                                value={cardNumber}
-                                onChange={handleCardNumberChange}
-                                placeholder="4242 •••• •••• 4242"
-                                className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white font-mono text-[14px]"
-                              />
-                              <div className="absolute right-3 top-2.5 text-[#999999]">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-[#444444] mb-1 font-medium">Name on Card *</label>
-                            <input
-                              type="text"
-                              value={cardName}
-                              onChange={(e) => setCardName(e.target.value)}
-                              placeholder="Full name as printed on card"
-                              className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white text-[#111]"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-[#444444] mb-1 font-medium">Expiry Date *</label>
-                              <input
-                                type="text"
-                                maxLength={5}
-                                value={cardExpiry}
-                                onChange={handleExpiryChange}
-                                placeholder="MM / YY"
-                                className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white font-mono text-[14px]"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[#444444] mb-1 font-medium">Security Code (CVC) *</label>
-                              <input
-                                type="password"
-                                maxLength={4}
-                                value={cardCvc}
-                                onChange={handleCvcChange}
-                                placeholder="CVC"
-                                className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none bg-white font-mono text-[14px]"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="p-3 bg-white border border-[#ececec] flex items-center gap-2.5 text-[11px] text-[#666666]">
-                            <svg className="w-4 h-4 text-emerald-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                            <span>
-                              Payment is processed directly on this page via Stripe. Your card data is never stored on our servers.
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Cash on Delivery (Pakistan only) */}
-                    <div
-                      className={`border p-4 transition-all ${
-                        paymentMethod === "cod" ? "border-black bg-[#fafafa]" : "border-[#e0e0e0]"
-                      }`}
-                    >
-                      <label className="flex items-center justify-between cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="payment_method"
-                            checked={paymentMethod === "cod"}
-                            onChange={() => setPaymentMethod("cod")}
-                            className="accent-black"
-                          />
-                          <span className="font-semibold text-[14px]">Cash on Delivery (Pakistan Only)</span>
-                        </div>
-                        <span className="text-[12px] text-[#666666] font-sans-custom">Pay upon arrival</span>
-                      </label>
-                      {paymentMethod === "cod" && (
-                        <div className="mt-3 pt-3 border-t border-[#e8e8e1] text-[12px] text-[#555555] font-sans-custom">
-                          Pay cash to the courier representative when your outfit is delivered to your doorstep.
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Direct Bank Transfer */}
-                    <div
-                      className={`border p-4 transition-all ${
-                        paymentMethod === "bank_transfer" ? "border-black bg-[#fafafa]" : "border-[#e0e0e0]"
-                      }`}
-                    >
-                      <label className="flex items-center justify-between cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="payment_method"
-                            checked={paymentMethod === "bank_transfer"}
-                            onChange={() => setPaymentMethod("bank_transfer")}
-                            className="accent-black"
-                          />
-                          <span className="font-semibold text-[14px]">Direct Bank Transfer</span>
-                        </div>
-                      </label>
-                      {paymentMethod === "bank_transfer" && (
-                        <div className="mt-3 pt-3 border-t border-[#e8e8e1] text-[12px] text-[#555555] font-sans-custom space-y-1.5">
-                          <p><strong>Bank:</strong> Habib Bank Limited (HBL) / MCB</p>
-                          <p><strong>Account Title:</strong> Sillhouete Couture Pvt Ltd</p>
-                          <p><strong>IBAN:</strong> PK36HABB0001234567890123</p>
-                          <p className="text-[11px] text-[#777777] pt-1">
-                            Please share your payment confirmation slip on WhatsApp at +92 331 0397865 after placing your order.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 5. Order Notes / Bespoke Custom Measurements */}
-                <div className="bg-white p-6 sm:p-8 border border-[#e8e8e1]">
-                  <h2 className="text-[15px] font-bold uppercase tracking-[0.15em] text-[#111111] mb-2">
-                    5. Order Notes &amp; Custom Sizing (Optional)
-                  </h2>
-                  <p className="text-[12px] text-[#666666] font-sans-custom mb-3">
-                    If you selected Custom Size or have specific delivery requirements (e.g. wedding event date, custom blouse length), please note them below:
-                  </p>
-                  <textarea
-                    rows={3}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="e.g. Event date is Dec 15th, please tailor shirt length to 42 inches."
-                    className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none font-sans-custom text-[13px] bg-white resize-none"
-                  />
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-2">
                   <button
-                    type="submit"
-                    disabled={isProcessing}
-                    className="w-full bg-black text-white hover:bg-[#222222] py-4 text-[13px] font-bold uppercase tracking-[0.25em] transition-all cursor-pointer shadow-md disabled:opacity-60 flex items-center justify-center gap-3"
+                    type="button"
+                    onClick={() => setShowItemDetails(!showItemDetails)}
+                    className="text-[12px] text-[#707070] hover:text-black flex items-center gap-1 mt-1 cursor-pointer"
                   >
-                    {isProcessing ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Processing Order...</span>
-                      </>
-                    ) : (
-                      <span>Complete Order • {formatNumberAmount(totalPKR, currentCurrency)}</span>
-                    )}
+                    <span>{showItemDetails ? "Hide 2 items" : "Show 2 items"}</span>
+                    <span className="text-[10px]">{showItemDetails ? "▲" : "▼"}</span>
                   </button>
                 </div>
               </div>
 
-              {/* ========================================================= */}
-              {/* RIGHT COLUMN: Order Summary & Item List (5 cols)          */}
-              {/* ========================================================= */}
-              <div className="lg:col-span-5 space-y-6">
-                <div className="bg-white p-6 sm:p-8 border border-[#e8e8e1]">
-                  <h2 className="text-[15px] font-bold uppercase tracking-[0.15em] text-[#111111] pb-4 border-b border-[#e8e8e1] flex items-center justify-between">
-                    <span>Order Summary</span>
-                    <span className="text-[12px] font-normal text-[#666666] font-sans-custom">
-                      {cart.reduce((sum, item) => sum + item.quantity, 0)} Items
-                    </span>
-                  </h2>
-
-                  {/* Cart Items list */}
-                  <div className="divide-y divide-[#f0f0f0] max-h-[360px] overflow-y-auto my-4 pr-1">
-                    {cart.map((item) => (
-                      <div key={item.id} className="py-3 flex items-center gap-4">
-                        <div className="relative w-16 h-20 bg-[#f9f9f9] border border-[#e8e8e1] flex-shrink-0 overflow-hidden">
-                          {item.image && (
-                            <Image
-                              src={item.image}
-                              alt={item.title}
-                              fill
-                              className="object-cover"
-                              sizes="64px"
-                            />
-                          )}
-                          <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-sans-custom font-bold">
-                            {item.quantity}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0 font-serif">
-                          <h4 className="text-[13px] font-medium text-[#111111] truncate">
-                            {item.title}
-                          </h4>
-                          <p className="text-[11px] text-[#777777] font-sans-custom uppercase mt-0.5">
-                            Size: {item.size || "Standard"}
-                          </p>
-                          <p className="text-[13px] font-semibold text-[#111111] font-sans-custom mt-1">
-                            {formatPrice(item.price, currentCurrency)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Coupon Code Input */}
-                  <div className="pt-4 border-t border-[#e8e8e1]">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Discount code (e.g. SILLHOUETE10)"
-                        className="flex-1 px-3 py-2 border border-[#d6d6d6] focus:border-black outline-none font-sans-custom text-[12px] uppercase tracking-wider"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleApplyCoupon}
-                        className="bg-black text-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-[#222222]"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                    {couponSuccess && (
-                      <p className="text-[12px] text-emerald-700 font-sans-custom mt-2">
-                        ✓ {couponSuccess}
-                      </p>
-                    )}
-                    {couponError && (
-                      <p className="text-[12px] text-red-600 font-sans-custom mt-2">
-                        ⚠️ {couponError}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Pricing Breakdown */}
-                  <div className="space-y-3 pt-6 border-t border-[#e8e8e1] font-sans-custom text-[13px]">
-                    <div className="flex justify-between text-[#555555]">
-                      <span>Subtotal</span>
-                      <span className="font-medium text-black">
-                        {formatNumberAmount(subtotalPKR, currentCurrency)}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between text-[#555555]">
-                      <span>Shipping ({country})</span>
-                      <span className="font-medium text-black">
-                        {shippingFeePKR === 0 ? "FREE" : formatNumberAmount(shippingFeePKR, currentCurrency)}
-                      </span>
-                    </div>
-
-                    {discountAmountPKR > 0 && (
-                      <div className="flex justify-between text-emerald-700 font-medium">
-                        <span>Promo Discount ({discountPercent}%)</span>
-                        <span>-{formatNumberAmount(discountAmountPKR, currentCurrency)}</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-baseline pt-4 border-t border-[#e8e8e1] text-[16px] font-bold text-black font-serif">
-                      <span>Total</span>
-                      <div className="text-right">
-                        <span className="text-[11px] font-normal text-[#777777] font-sans-custom block">
-                          Inclusive of all taxes &amp; duties
-                        </span>
-                        <span>{formatNumberAmount(totalPKR, currentCurrency)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trust & Guarantee Box */}
-                <div className="bg-white p-6 border border-[#e8e8e1] space-y-4 font-sans-custom text-[12px] text-[#555555]">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-black flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>100% Authentic Pakistani Designer Couture Guaranteed</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-black flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                    <span>Direct Stripe on-site payment with instant receipt</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-black flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Worldwide Tracked Delivery via DHL &amp; FedEx</span>
-                  </div>
-                </div>
+              {/* Price */}
+              <div className="text-right text-[14px] font-normal text-[#111111] shrink-0">
+                {formatShopifyPrice(p)}
               </div>
             </div>
-          </form>
+
+            {/* Collapsible Indented Sub-items */}
+            {showItemDetails && (
+              <div className="pl-6 space-y-2 text-[12px] text-[#707070] pt-1">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-7 relative bg-white rounded-xs border border-[#e5e5e5] overflow-hidden shrink-0">
+                    {item.image && (
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        sizes="24px"
+                        unoptimized
+                      />
+                    )}
+                  </div>
+                  <span>1 × {item.title}</span>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-7 rounded-xs border border-[#e5e5e5] bg-white flex items-center justify-center text-[#aaaaaa] shrink-0">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <span>1 × Same as Sample</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Discount Code Input Row */}
+      <div className="pt-3">
+        <div className="flex gap-2.5">
+          <input
+            type="text"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            placeholder="Discount code"
+            className="flex-1 px-3.5 py-2.5 border border-[#d9d9d9] rounded-md text-[14px] bg-white text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none shadow-2xs"
+          />
+          <button
+            type="button"
+            onClick={handleApplyCoupon}
+            className="bg-[#f0f0f0] hover:bg-[#e4e4e4] text-[#333333] border border-[#d9d9d9] rounded-md px-4 py-2.5 text-[13px] font-medium transition-colors cursor-pointer shadow-2xs"
+          >
+            Apply
+          </button>
+        </div>
+
+        {couponSuccess && (
+          <p className="text-[12px] text-emerald-700 mt-2">✓ {couponSuccess}</p>
         )}
-      </main>
+        {couponError && (
+          <p className="text-[12px] text-red-600 mt-2">{couponError}</p>
+        )}
+      </div>
+
+      {/* Cost Breakdown */}
+      <div className="space-y-3 pt-3 text-[14px]">
+        <div className="flex justify-between text-[#555555]">
+          <span>Subtotal</span>
+          <span className="font-normal text-[#111111]">
+            {formatShopifyPrice(subtotalPKR)}
+          </span>
+        </div>
+
+        <div className="flex justify-between text-[#555555] items-center">
+          <span className="flex items-center gap-1.5">
+            <span>Shipping</span>
+            <div
+              className="w-3.5 h-3.5 rounded-full border border-[#999999] text-[#707070] flex items-center justify-center text-[9px] font-bold cursor-help"
+              title="Standard Free Shipping across Pakistan"
+            >
+              ?
+            </div>
+          </span>
+          <span className="font-normal text-[#111111]">
+            {shippingFeePKR === 0 ? "FREE" : formatShopifyPrice(shippingFeePKR)}
+          </span>
+        </div>
+
+        {discountAmountPKR > 0 && (
+          <div className="flex justify-between text-emerald-700">
+            <span>Discount ({discountPercent}%)</span>
+            <span>-{formatShopifyPrice(discountAmountPKR)}</span>
+          </div>
+        )}
+
+        {/* Total Amount Row */}
+        <div className="flex justify-between items-baseline pt-4 border-t border-[#e6e6e6]">
+          <span className="text-[16px] font-medium text-[#111111]">Total</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[12px] text-[#707070]">PKR</span>
+            <span className="text-[20px] font-semibold text-[#111111]">
+              {formatShopifyPrice(totalPKR)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-white text-[#333333] font-sans antialiased selection:bg-[#005bd3] selection:text-white flex flex-col">
+      {/* ========================================================= */}
+      {/* 1. TOP HEADER: Centered Logo & Right Bag Icon              */}
+      {/* ========================================================= */}
+      <header className="border-b border-[#e6e6e6] bg-white py-5 px-4 sm:px-8 shrink-0">
+        <div className="max-w-[1240px] mx-auto flex items-center justify-between">
+          <div className="w-8" />
+
+          <Link href="/" className="inline-block mx-auto hover:opacity-90 transition-opacity">
+            <Image
+              src="https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png?v=1744702089&width=220"
+              alt="Sillhouete"
+              width={165}
+              height={44}
+              className="h-10 w-auto object-contain"
+              priority
+              unoptimized
+            />
+          </Link>
+
+          <Link
+            href="/cart"
+            className="text-[#005bd3] hover:text-[#004bb5] transition-colors p-1"
+            title="Return to Cart"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </Link>
+        </div>
+      </header>
+
+      {/* ========================================================= */}
+      {/* Mobile Order Summary Accordion (< lg screens only)         */}
+      {/* ========================================================= */}
+      <div className="lg:hidden border-b border-[#e6e6e6] bg-[#f5f5f5]">
+        <button
+          type="button"
+          onClick={() => setShowMobileSummary(!showMobileSummary)}
+          className="w-full px-4 py-3.5 flex items-center justify-between text-[14px] cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-[#005bd3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span className="font-medium text-[#005bd3]">
+              {showMobileSummary ? "Hide order summary" : "Show order summary"}
+            </span>
+            <span className="text-[10px] text-[#707070]">{showMobileSummary ? "▲" : "▼"}</span>
+          </div>
+          <span className="font-semibold text-[#111111]">{formatShopifyPrice(totalPKR)}</span>
+        </button>
+
+        {showMobileSummary && (
+          <div className="px-4 pb-6 pt-2 border-t border-[#e6e6e6] space-y-4">
+            {renderOrderSummary()}
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================= */}
+      {/* 2. MAIN CHECKOUT: Full-Bleed Two Column Flexbox Layout     */}
+      {/* Left = Pure White (#ffffff)  |  Right = Soft Gray (#f5f5f5)*/}
+      {/* No overflow-x-hidden → sticky works perfectly              */}
+      {/* ========================================================= */}
+      <div className="flex-1 w-full flex flex-col lg:flex-row min-h-[calc(100vh-85px)]">
+
+        {/* ======================================================= */}
+        {/* LEFT COLUMN: Form (56% desktop, white)                   */}
+        {/* ======================================================= */}
+        <div className="w-full lg:w-[56%] xl:w-[58%] bg-white flex justify-end">
+          <form onSubmit={handleSubmitOrder} className="w-full max-w-[620px] px-4 sm:px-8 lg:pl-8 lg:pr-14 py-8 lg:py-10 space-y-6">
+
+            {checkoutError && (
+              <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-[13px] rounded-md">
+                {checkoutError}
+              </div>
+            )}
+
+            {/* ----------------- A. CONTACT ----------------- */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <h2 className="text-[17px] font-medium text-[#111111]">Contact</h2>
+                <Link href="/login" className="text-[13px] text-[#005bd3] hover:underline font-normal">
+                  Sign in
+                </Link>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email or mobile phone number"
+                  className="w-full px-3.5 py-3 pr-10 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                />
+                <div
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-[#999999] text-[#707070] flex items-center justify-center text-[10px] font-bold cursor-help"
+                  title="In case we need to contact you about your order"
+                >
+                  ?
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2.5 mt-2.5 cursor-pointer text-[13px] text-[#333333]">
+                <input
+                  type="checkbox"
+                  checked={emailOffers}
+                  onChange={(e) => setEmailOffers(e.target.checked)}
+                  className="w-4 h-4 rounded-xs accent-[#005bd3] text-[#005bd3]"
+                />
+                <span>Email me with news and offers</span>
+              </label>
+            </div>
+
+            {/* ----------------- B. DELIVERY ----------------- */}
+            <div>
+              <h2 className="text-[17px] font-medium text-[#111111] mb-2.5">Delivery</h2>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-[#707070] uppercase tracking-wider mb-1">
+                    Country/Region
+                  </label>
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="w-full px-3.5 py-3 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] bg-white focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                  >
+                    <option value="Pakistan">Pakistan</option>
+                    <option value="United Arab Emirates">United Arab Emirates</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="United States">United States</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Saudi Arabia">Saudi Arabia</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    placeholder="First name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full px-3.5 py-3 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Last name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full px-3.5 py-3 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                  />
+                </div>
+
+                <input
+                  type="text"
+                  required
+                  placeholder="Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full px-3.5 py-3 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Apartment, suite, etc. (optional)"
+                  value={apartment}
+                  onChange={(e) => setApartment(e.target.value)}
+                  className="w-full px-3.5 py-3 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    required
+                    placeholder="City"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full px-3.5 py-3 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Postal code (optional)"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    className="w-full px-3.5 py-3 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                  />
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="tel"
+                    placeholder="Phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3.5 py-3 pr-10 border border-[#d9d9d9] rounded-md text-[14px] text-[#333333] placeholder-[#707070] focus:border-[#005bd3] focus:ring-1 focus:ring-[#005bd3] outline-none transition-all"
+                  />
+                  <div
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-[#999999] text-[#707070] flex items-center justify-center text-[10px] font-bold cursor-help"
+                    title="In case we need to contact you about your order"
+                  >
+                    ?
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2.5 pt-1 cursor-pointer text-[13px] text-[#333333]">
+                  <input
+                    type="checkbox"
+                    checked={saveInfo}
+                    onChange={(e) => setSaveInfo(e.target.checked)}
+                    className="w-4 h-4 rounded-xs accent-[#005bd3] text-[#005bd3]"
+                  />
+                  <span>Save this information for next time</span>
+                </label>
+              </div>
+            </div>
+
+            {/* ----------------- C. SHIPPING METHOD ----------------- */}
+            <div>
+              <h2 className="text-[17px] font-medium text-[#111111] mb-2.5">Shipping method</h2>
+              <div className="p-3.5 border border-[#005bd3] bg-[#f0f5ff] rounded-md flex items-center justify-between">
+                <span className="text-[14px] font-medium text-[#111111]">Standard</span>
+                <span className="text-[14px] font-semibold text-[#111111]">FREE</span>
+              </div>
+            </div>
+
+            {/* ----------------- D. PAYMENT ----------------- */}
+            <div>
+              <h2 className="text-[17px] font-medium text-[#111111] mb-1">Payment</h2>
+              <p className="text-[13px] text-[#707070] mb-3">
+                All transactions are secure and encrypted.
+              </p>
+
+              <div className="border border-[#d9d9d9] rounded-md overflow-hidden divide-y divide-[#d9d9d9]">
+                {/* Option 1: Credit card */}
+                <div>
+                  <label
+                    onClick={() => setPaymentOption("credit_card")}
+                    className={`flex items-center justify-between p-3.5 cursor-pointer transition-colors ${
+                      paymentOption === "credit_card" ? "bg-[#f0f5ff]" : "bg-white hover:bg-[#fafafa]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="payment_accordion"
+                        checked={paymentOption === "credit_card"}
+                        onChange={() => setPaymentOption("credit_card")}
+                        className="w-4 h-4 accent-[#005bd3] text-[#005bd3]"
+                      />
+                      <span className="text-[14px] font-medium text-[#111111]">Credit card</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="inline-flex items-center justify-center bg-[#1434CB] text-white font-bold italic text-[9px] px-2 py-0.5 rounded-[3px] tracking-wider">VISA</span>
+                      <span className="inline-flex items-center justify-center bg-white border border-[#e5e5e5] px-1 py-0.5 rounded-[3px]">
+                        <svg className="w-5 h-3.5" viewBox="0 0 36 24" fill="none">
+                          <circle cx="14" cy="12" r="10" fill="#EB001B" />
+                          <circle cx="22" cy="12" r="10" fill="#F79E1B" fillOpacity="0.85" />
+                        </svg>
+                      </span>
+                      <span className="inline-flex items-center justify-center bg-[#006FCF] text-white font-bold text-[8px] px-1.5 py-0.5 rounded-[3px] tracking-wider">AMEX</span>
+                      <span className="inline-flex items-center justify-center bg-[#f0f0f0] text-[#555] font-semibold text-[9px] px-1.5 py-0.5 rounded-[3px] border border-[#d9d9d9]">+3</span>
+                    </div>
+                  </label>
+
+                  {/* Expanded Card Fields: Official Stripe Checkout Form SDK with Dynamic Card Detection */}
+                  {paymentOption === "credit_card" && (
+                    <div className="p-4 bg-white border-t border-[#d9d9d9]">
+                      {!stripeReady && (
+                        <div className="space-y-3 animate-pulse py-2">
+                          <div className="h-10 bg-[#f4f4f5] rounded-md border border-[#e5e5e7]" />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="h-10 bg-[#f4f4f5] rounded-md border border-[#e5e5e7]" />
+                            <div className="h-10 bg-[#f4f4f5] rounded-md border border-[#e5e5e7]" />
+                          </div>
+                        </div>
+                      )}
+                      {/* Dedicated empty mounting node for Stripe Dahlia SDK */}
+                      <div ref={formContainerRef} id="checkout-form" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pay Now Button (only visible before Stripe form mounts) */}
+              {!stripeReady && (
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full bg-[#005bd3] hover:bg-[#004bb5] text-white font-medium py-3.5 px-4 rounded-md text-[15px] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span>Processing payment...</span>
+                      </>
+                    ) : (
+                      <span>Pay now</span>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ----------------- E. POLICIES ----------------- */}
+            <div className="pt-3 pb-4">
+              <Link href="/policies" className="text-[12px] text-[#005bd3] hover:underline">
+                Terms and policies
+              </Link>
+            </div>
+          </form>
+        </div>
+
+        {/* ======================================================= */}
+        {/* RIGHT COLUMN: Order Summary (44% desktop, #f5f5f5)       */}
+        {/* sticky top-0 self-start → stays pinned while scrolling   */}
+        {/* No overflow-x-hidden anywhere → sticky works perfectly   */}
+        {/* ======================================================= */}
+        <div className="hidden lg:flex w-full lg:w-[44%] xl:w-[42%] bg-[#f5f5f5] lg:border-l border-[#e6e6e6] justify-start">
+          <div className="w-full max-w-[480px] px-4 sm:px-8 lg:pr-8 lg:pl-12 py-8 lg:py-10 sticky top-0 self-start space-y-4">
+            {renderOrderSummary()}
+          </div>
+        </div>
+      </div>
+
+      {/* Stripe Dahlia Checkout Form SDK Script */}
+      <Script
+        src="https://js.stripe.com/dahlia/stripe.js"
+        strategy="afterInteractive"
+        onLoad={() => setStripeScriptLoaded(true)}
+      />
     </div>
   );
 }
-

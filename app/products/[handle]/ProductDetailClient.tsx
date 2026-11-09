@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useStore, formatPrice } from "../../store/useStore";
+import { useStore, formatPrice, parsePriceToNumber } from "../../store/useStore";
 import ProductReviewsWidget from "../../components/ProductReviewsWidget";
 import FeaturedReviewsCarousel from "../../components/FeaturedReviewsCarousel";
 import KeyActivesSection from "../../components/KeyActivesSection";
@@ -27,6 +27,14 @@ export interface ProductDetailProps {
     }>;
     tags?: string[];
     collectionTitle?: string;
+    video_url?: string;
+    fabric?: string;
+    color?: string;
+    pieces?: string;
+    dress_style?: string;
+    work_details?: string;
+    delivery_time?: string;
+    care_instructions?: string;
   };
   similarProducts: Array<{
     handle: string;
@@ -66,7 +74,7 @@ export default function ProductDetailClient({
   const images = product.images.length > 0 ? product.images : ["/favicon.ico"];
 
   // Base price calculation
-  const rawPriceNum = parseFloat(product.price.replace(/[^\d.]/g, "")) || 32900;
+  const rawPriceNum = parsePriceToNumber(product.price) || 32900;
   const expediteCost = isExpedited ? 8000 : 0;
   const totalPriceNum = rawPriceNum + expediteCost;
   const formattedTotalPrice = `Rs.${totalPriceNum.toLocaleString()}`;
@@ -444,6 +452,55 @@ export default function ProductDetailClient({
               )}
             </div>
 
+            {/* Couture Specifications Box */}
+            {(product.fabric || product.color || product.pieces || product.dress_style || product.work_details || product.delivery_time) && (
+              <div className="mt-6 p-4 sm:p-5 bg-[#fafbfc] border border-[#e5e7eb] rounded-none space-y-3 font-serif">
+                <h3 className="text-[11px] uppercase font-sans-custom tracking-[0.2em] font-bold text-[#0e3359] border-b border-[#e2e8f0] pb-2 flex items-center justify-between">
+                  <span>Atelier Specifications &amp; Craftsmanship</span>
+                  <span className="text-[10px] text-[#64748b] font-normal uppercase">Authentic Couture</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-[13px]">
+                  {product.pieces && (
+                    <div>
+                      <span className="text-[#888888] text-[10.5px] uppercase tracking-wider block font-sans-custom font-semibold">Includes:</span>
+                      <span className="text-[#111111] font-medium">{product.pieces}</span>
+                    </div>
+                  )}
+                  {product.fabric && (
+                    <div>
+                      <span className="text-[#888888] text-[10.5px] uppercase tracking-wider block font-sans-custom font-semibold">Fabric:</span>
+                      <span className="text-[#111111] font-medium">{product.fabric}</span>
+                    </div>
+                  )}
+                  {product.color && (
+                    <div>
+                      <span className="text-[#888888] text-[10.5px] uppercase tracking-wider block font-sans-custom font-semibold">Color Palette:</span>
+                      <span className="text-[#111111] font-medium">{product.color}</span>
+                    </div>
+                  )}
+                  {product.dress_style && (
+                    <div>
+                      <span className="text-[#888888] text-[10.5px] uppercase tracking-wider block font-sans-custom font-semibold">Cut &amp; Silhouette:</span>
+                      <span className="text-[#111111] font-medium">{product.dress_style}</span>
+                    </div>
+                  )}
+                  {product.work_details && (
+                    <div className="sm:col-span-2">
+                      <span className="text-[#888888] text-[10.5px] uppercase tracking-wider block font-sans-custom font-semibold">Embellishment Details:</span>
+                      <span className="text-[#111111] font-medium">{product.work_details}</span>
+                    </div>
+                  )}
+                  {product.delivery_time && (
+                    <div className="sm:col-span-2">
+                      <span className="text-[#888888] text-[10.5px] uppercase tracking-wider block font-sans-custom font-semibold">Dispatch Time:</span>
+                      <span className="text-[#111111] font-medium">{product.delivery_time}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Full Product Description (HTML or parsed) */}
             {product.body_html && (
               <div className="mt-6 pt-2 text-[14px] font-serif text-[#333333] leading-relaxed prose prose-stone max-w-none">
@@ -663,6 +720,7 @@ export default function ProductDetailClient({
       <FloatingProductVideo
         productHandle={product.handle}
         productTitle={product.title}
+        videoUrl={product.video_url}
       />
     </div>
   );

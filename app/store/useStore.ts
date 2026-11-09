@@ -32,20 +32,40 @@ export const CURRENCY_RATES: Record<string, { symbol: string; rate: number; pref
   CAD: { symbol: "CAD $", rate: 0.0049, prefix: true },
 };
 
+export function parsePriceToNumber(val: any): number {
+  if (typeof val === "number") return isNaN(val) ? 0 : val;
+  if (!val) return 0;
+  let s = String(val).trim();
+  // Strip currency prefixes including trailing dot like "Rs." or "PKR"
+  s = s.replace(/^(Rs\.?|PKR|USD|\$|£|€|CAD\s*\$)\s*/i, "").trim();
+  // Strip thousands commas
+  s = s.replace(/,/g, "");
+  const m = s.match(/-?\d+(\.\d+)?/);
+  if (!m) return 0;
+  const n = parseFloat(m[0]);
+  return isNaN(n) ? 0 : n;
+}
+
 export function formatPrice(pkrString: string | null | undefined, currency: string = "PKR"): string {
   if (!pkrString) return "";
-  if (currency === "PKR") return pkrString;
-  const num = parseInt(pkrString.replace(/[^\d]/g, ""), 10);
-  if (isNaN(num)) return pkrString;
+  const num = parsePriceToNumber(pkrString);
+  if (currency === "PKR") {
+    // If original string already has proper formatted structure and no currency conversion needed
+    if (String(pkrString).includes("Rs.") && !String(pkrString).includes(".0.")) {
+      return pkrString;
+    }
+    return `Rs.${num.toLocaleString()}`;
+  }
   const conf = CURRENCY_RATES[currency] || CURRENCY_RATES.PKR;
   const converted = Math.round(num * conf.rate);
   return `${conf.symbol}${converted.toLocaleString()}`;
 }
 
-export function formatNumberAmount(amountPKR: number, currency: string = "PKR"): string {
-  if (currency === "PKR") return `Rs.${amountPKR.toLocaleString()}`;
+export function formatNumberAmount(amountPKR: number | string, currency: string = "PKR"): string {
+  const num = parsePriceToNumber(amountPKR);
+  if (currency === "PKR") return `Rs.${num.toLocaleString()}`;
   const conf = CURRENCY_RATES[currency] || CURRENCY_RATES.PKR;
-  const converted = Math.round(amountPKR * conf.rate);
+  const converted = Math.round(num * conf.rate);
   return `${conf.symbol}${converted.toLocaleString()}`;
 }
 

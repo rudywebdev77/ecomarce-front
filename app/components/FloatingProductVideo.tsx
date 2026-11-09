@@ -6,19 +6,30 @@ import productVideosMap from "../product_videos.json";
 interface FloatingProductVideoProps {
   productHandle: string;
   productTitle: string;
+  videoUrl?: string;
+}
+
+function extractYouTubeId(urlOrId?: string): string | null {
+  if (!urlOrId) return null;
+  const str = urlOrId.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
+  const match = str.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+  return match ? match[1] : null;
 }
 
 export default function FloatingProductVideo({
   productHandle,
   productTitle,
+  videoUrl,
 }: FloatingProductVideoProps) {
   const [isDismissed, setIsDismissed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Look up video for this product handle (case-insensitive)
+  // Look up video for this product handle (case-insensitive) or explicit videoUrl
   const normalizedHandle = productHandle.toLowerCase().trim();
   const videos = productVideosMap as Record<string, string>;
-  const videoId = videos[normalizedHandle] || null;
+  const explicitVideoId = extractYouTubeId(videoUrl);
+  const videoId = explicitVideoId || videos[normalizedHandle] || null;
 
   // Close modal on Escape key
   useEffect(() => {

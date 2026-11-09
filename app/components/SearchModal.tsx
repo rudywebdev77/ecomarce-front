@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import siteData from "../site_data.json";
 import { useStore } from "../store/useStore";
+import { API_BASE } from "../lib/api";
 
 // Product type taken directly from site_data.json
 type SiteProduct = (typeof siteData.collections)[number]["products"][number];
@@ -14,19 +15,49 @@ export default function SearchModal() {
   const router = useRouter();
   const { isSearchOpen, closeSearch, addToCart } = useStore();
   const [query, setQuery] = useState("");
+  const [dbProducts, setDbProducts] = useState<SearchProduct[]>([]);
+
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    fetch(`${API_BASE}/products?limit=250`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.products && Array.isArray(data.products)) {
+          const mapped: SearchProduct[] = data.products.map((p: any) => ({
+            id: p.id || p._id,
+            title: p.title,
+            handle: p.handle,
+            link: `/products/${p.handle}`,
+            currentPrice: `Rs.${Number(p.price || 0).toLocaleString()}`,
+            comparePrice: p.compare_at_price ? `Rs.${Number(p.compare_at_price).toLocaleString()}` : null,
+            primaryImage: p.images?.[0] || "https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png",
+            secondaryImage: p.images?.[1] || p.images?.[0] || "https://sillhouete.com/cdn/shop/files/sillhouete_logo_1.png",
+            isNew: !!p.is_new,
+            isSale: !!p.is_sale || Boolean(p.compare_at_price),
+            isSoldOut: p.in_stock === false,
+            collectionTitle: p.category || "Luxury Pret",
+          }));
+          setDbProducts(mapped);
+        }
+      })
+      .catch(() => {});
+  }, [isSearchOpen]);
 
   // Flatten all products across collections
   const allProducts = useMemo(() => {
-    const list: SearchProduct[] = [];
+    const list: SearchProduct[] = [...dbProducts];
+    const seen = new Set(dbProducts.map((p) => p.handle.toLowerCase()));
+
     siteData.collections.forEach((col) => {
       col.products.forEach((p) => {
-        if (!list.some((existing) => existing.handle === p.handle)) {
+        if (!seen.has(p.handle.toLowerCase())) {
+          seen.add(p.handle.toLowerCase());
           list.push({ ...p, collectionTitle: col.title });
         }
       });
     });
     return list;
-  }, []);
+  }, [dbProducts]);
 
   const results = useMemo(() => {
     if (!query.trim()) return [];

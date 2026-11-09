@@ -7,6 +7,8 @@ import Footer from "../../components/Footer";
 import AnnouncementBar from "../../components/AnnouncementBar";
 import { API_BASE } from "../../lib/api";
 
+export const dynamic = "force-dynamic";
+
 interface BlogProps {
   params: Promise<{ handle: string }>;
 }
@@ -16,7 +18,7 @@ async function getBlogPost(handle: string) {
     const res = await fetch(`${API_BASE}/blogs/${handle}`, { cache: "no-store" });
     if (!res.ok) return null;
     return await res.json();
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -68,11 +70,13 @@ export default async function BlogPostPage({ params }: BlogProps) {
             )}
             <span className="text-[#cccccc]">•</span>
             <span className="text-[12px] font-sans-custom text-[#777777]">
-              {new Date(blog.published_at || blog.created_at || Date.now()).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {blog.published_at || blog.created_at
+                ? new Date(blog.published_at || blog.created_at).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Recent"}
             </span>
           </div>
 

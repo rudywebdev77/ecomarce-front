@@ -272,3 +272,24 @@ body {
 }
 
 
+
+/* Hide Stripe floating badge */
+a[href*="stripe.com"][target="_blank"],
+div[class*="StripeCheckout"] > a,
+iframe[name*="stripe-badge"],
+iframe[src*="stripe.com/checkout/badge"],
+iframe[src*="stripe.com"][style*="fixed"],
+[data-stripe-badge],
+.p-StripeElement--badge,
+body > div[style*="position: fixed"] > iframe[src*="stripe"],
+body > div[style*="position:fixed"] > iframe[src*="stripe"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}

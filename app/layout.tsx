@@ -28,6 +28,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased scroll-smooth">
       <head>
+        <link rel="preconnect" href="https://js.stripe.com" />
+        <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

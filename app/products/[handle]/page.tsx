@@ -11,6 +11,9 @@ import SearchModal from "../../components/SearchModal";
 import CurrencySwitcher from "../../components/CurrencySwitcher";
 import WhatsAppButton from "../../components/WhatsAppButton";
 import ProductDetailClient from "./ProductDetailClient";
+import { API_BASE } from "../../lib/api";
+
+export const dynamic = "force-dynamic";
 
 interface RawProduct {
   id: number;
@@ -44,6 +47,23 @@ export async function generateMetadata({
   const { handle } = await params;
   const decodedHandle = decodeURIComponent(handle).toLowerCase();
 
+  try {
+    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.product) {
+        return {
+          title: `${data.product.title} – Sillhouete`,
+          description:
+            data.product.description ||
+            `Shop ${data.product.title} online at Sillhouete. Luxury Pakistani couture, bridal and formal wear.`,
+        };
+      }
+    }
+  } catch {
+    // ignore and fallback
+  }
+
   const product =
     rawProducts.find((p) => p.handle.toLowerCase() === decodedHandle) ||
     rawProducts.find((p) => p.title.toLowerCase().trim() === decodedHandle);
@@ -68,12 +88,112 @@ async function ProductContent({
   const { handle } = await params;
   const decodedHandle = decodeURIComponent(handle).toLowerCase();
 
-  // 1. Find product in raw_products.json
+  // Try DB first
+  let dbProduct: any = null;
+  let dbSimilar: any[] = [];
+
+  try {
+    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.product) {
+        dbProduct = data.product;
+        dbSimilar = data.similar || [];
+      }
+    }
+  } catch {
+    // Database connection or endpoint error fallback to local json
+  }
+
+  // 1. If found in Database (e.g. added via Admin panel)
+  if (dbProduct) {
+    let similarProducts: Array<{
+      handle: string;
+      title: string;
+      price: string;
+      image: string;
+      secondaryImage?: string;
+    }> = dbSimilar.map((p) => ({
+      handle: p.handle,
+      title: p.title,
+      price: `Rs.${Number(p.price || 0).toLocaleString()}`,
+      image: p.images?.[0] || "",
+      secondaryImage: p.images?.[1] || undefined,
+    }));
+
+    if (similarProducts.length < 4) {
+      const otherProducts = rawProducts
+        .filter((p) => p.handle !== dbProduct.handle && p.images && p.images.length > 0)
+        .slice(0, 4 - similarProducts.length)
+        .map((p) => ({
+          handle: p.handle,
+          title: p.title,
+          price: `Rs.${parseFloat(p.variants[0]?.price || "32900").toLocaleString()}`,
+          image: p.images[0]?.src || "",
+          secondaryImage: p.images[1]?.src,
+        }));
+      similarProducts = [...similarProducts, ...otherProducts];
+    }
+
+    const formattedProduct = {
+      id: dbProduct.id || dbProduct._id,
+      title: dbProduct.title,
+      handle: dbProduct.handle,
+      vendor: dbProduct.vendor || "SILLHOUETE",
+      body_html: dbProduct.description || "",
+      price: dbProduct.price
+        ? `Rs.${Number(dbProduct.price).toLocaleString()}`
+        : "Rs.32,900",
+      comparePrice: dbProduct.compare_at_price
+        ? `Rs.${Number(dbProduct.compare_at_price).toLocaleString()}`
+        : null,
+      images: Array.isArray(dbProduct.images) && dbProduct.images.length > 0 ? dbProduct.images : [],
+      video_url: dbProduct.video_url || "",
+      fabric: dbProduct.fabric || "",
+      color: dbProduct.color || "",
+      pieces: dbProduct.pieces || "",
+      dress_style: dbProduct.dress_style || "",
+      work_details: dbProduct.work_details || "",
+      delivery_time: dbProduct.delivery_time || "",
+      care_instructions: dbProduct.care_instructions || "",
+      variants:
+        dbProduct.variants && dbProduct.variants.length > 0
+          ? dbProduct.variants.map((v: any, idx: number) => ({
+              id: v.id || idx,
+              title: v.title,
+              price: `Rs.${Number(v.price).toLocaleString()}`,
+              compare_at_price: v.compare_at_price
+                ? `Rs.${Number(v.compare_at_price).toLocaleString()}`
+                : null,
+            }))
+          : dbProduct.sizes && dbProduct.sizes.length > 0
+          ? dbProduct.sizes.map((s: string, idx: number) => ({
+              id: idx,
+              title: s,
+              price: `Rs.${Number(dbProduct.price).toLocaleString()}`,
+              compare_at_price: dbProduct.compare_at_price
+                ? `Rs.${Number(dbProduct.compare_at_price).toLocaleString()}`
+                : null,
+            }))
+          : [],
+      tags: dbProduct.tags || [],
+      collectionTitle: dbProduct.category || "Luxury Pret",
+    };
+
+    return (
+      <ProductDetailClient
+        product={formattedProduct}
+        similarProducts={similarProducts}
+      />
+    );
+  }
+
+  // 2. Find product in raw_products.json fallback
   let product = rawProducts.find(
     (p) => p.handle.toLowerCase() === decodedHandle
   );
 
-  // 2. If not found by handle, try matching with title in site_data.json
+  // 3. If not found by handle, try matching with title in site_data.json
   if (!product) {
     const allSiteProducts = siteData.collections.flatMap((c) => c.products);
     const siteMatch = allSiteProducts.find(
