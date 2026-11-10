@@ -115,7 +115,14 @@ async function CollectionContent({ params }: PageProps) {
           return (
             cat.includes("formal") ||
             pType.includes("formal") ||
-            tags.some((t: string) => t.includes("formal"))
+            tags.some((t: string) => t.includes("formal")) ||
+            cat.includes("lumiere") ||
+            cat.includes("zarqaa") ||
+            cat.includes("meeras") ||
+            cat.includes("tosha") ||
+            cat.includes("riwaj") ||
+            cat.includes("bahar") ||
+            cat.includes("shawl")
           );
         }
 
@@ -123,8 +130,16 @@ async function CollectionContent({ params }: PageProps) {
         if (cleanHandle === "bridal-dresses" || cleanHandle === "bridals" || cleanHandle === "bridal") {
           return (
             cat.includes("bridal") ||
+            cat.includes("birdal") ||
+            cat.includes("barat") ||
+            cat.includes("walima") ||
+            cat.includes("lehenga") ||
             pType.includes("bridal") ||
-            tags.some((t: string) => t.includes("bridal"))
+            tags.some((t: string) => t.includes("bridal") || t.includes("birdal") || t.includes("barat") || t.includes("walima")) ||
+            cat.includes("husan") ||
+            cat.includes("anarkali") ||
+            cat.includes("noor jahn") ||
+            cat.includes("roshanara")
           );
         }
 
@@ -133,7 +148,27 @@ async function CollectionContent({ params }: PageProps) {
           return (
             cat.includes("pret") ||
             pType.includes("pret") ||
-            tags.some((t: string) => t.includes("pret"))
+            tags.some((t: string) => t.includes("pret")) ||
+            cat.includes("maahi") ||
+            cat.includes("mahi") ||
+            cat.includes("solids") ||
+            cat.includes("silk") ||
+            cat.includes("raha") ||
+            cat.includes("luxe") ||
+            cat.includes("opal")
+          );
+        }
+
+        // 7. Accessories
+        if (cleanHandle === "accessories" || cleanHandle.includes("clutch") || cleanHandle.includes("jewel") || cleanHandle.includes("shawl")) {
+          return (
+            cat.includes("accessories") ||
+            cat.includes("clutch") ||
+            cat.includes("jewel") ||
+            cat.includes("pouch") ||
+            cat.includes("shawl") ||
+            pType.includes("accessories") ||
+            tags.some((t: string) => t.includes("accessories") || t.includes("clutch") || t.includes("jewel") || t.includes("shawl"))
           );
         }
 

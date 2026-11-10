@@ -45,10 +45,14 @@ export async function generateMetadata({
   params: Promise<{ handle: string }>;
 }) {
   const { handle } = await params;
-  const decodedHandle = decodeURIComponent(handle).toLowerCase();
+  const decodedHandle = decodeURIComponent(handle).toLowerCase().trim();
+  const cleanH = decodedHandle.replace(/[^a-z0-9\-]+/g, "");
 
   try {
-    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
+    let res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
+    if (!res.ok && cleanH && cleanH !== decodedHandle) {
+      res = await fetch(`${API_BASE}/products/${encodeURIComponent(cleanH)}`, { cache: "no-store" });
+    }
     if (res.ok) {
       const data = await res.json();
       if (data.product) {
@@ -68,15 +72,21 @@ export async function generateMetadata({
     rawProducts.find((p) => p.handle.toLowerCase() === decodedHandle) ||
     rawProducts.find((p) => p.title.toLowerCase().trim() === decodedHandle);
 
-  if (!product) {
+  if (product) {
     return {
-      title: "Product Not Found | Sillhouete",
+      title: `${product.title} – Sillhouete`,
+      description: `Shop ${product.title} online at Sillhouete. Luxury Pakistani couture, bridal and formal wear.`,
     };
   }
 
+  const cleanTitle = decodedHandle
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
   return {
-    title: `${product.title} – Sillhouete`,
-    description: `Shop ${product.title} online at Sillhouete. Luxury Pakistani couture, bridal and formal wear.`,
+    title: `${cleanTitle} – Sillhouete`,
+    description: `Shop ${cleanTitle} online at Sillhouete. Luxury Pakistani couture, bridal and formal wear.`,
   };
 }
 
@@ -86,19 +96,40 @@ async function ProductContent({
   params: Promise<{ handle: string }>;
 }) {
   const { handle } = await params;
-  const decodedHandle = decodeURIComponent(handle).toLowerCase();
+  const decodedHandle = decodeURIComponent(handle).toLowerCase().trim();
+  const cleanH = decodedHandle.replace(/[^a-z0-9\-]+/g, "");
 
   // Try DB first
   let dbProduct: any = null;
   let dbSimilar: any[] = [];
 
   try {
-    const res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
+    let res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
+    if (!res.ok && cleanH && cleanH !== decodedHandle) {
+      res = await fetch(`${API_BASE}/products/${encodeURIComponent(cleanH)}`, { cache: "no-store" });
+    }
     if (res.ok) {
       const data = await res.json();
       if (data.product) {
         dbProduct = data.product;
         dbSimilar = data.similar || [];
+      }
+    } else {
+      // Fallback search query on database
+      const searchRes = await fetch(`${API_BASE}/products?search=${encodeURIComponent(decodedHandle)}&limit=1`, { cache: "no-store" });
+      if (searchRes.ok) {
+        const sData = await searchRes.json();
+        if (sData.products && sData.products.length > 0) {
+          const match = sData.products.find(
+            (p: any) =>
+              p.handle.toLowerCase() === decodedHandle ||
+              p.handle.toLowerCase() === cleanH ||
+              p.title.toLowerCase().trim() === decodedHandle
+          );
+          if (match) {
+            dbProduct = match;
+          }
+        }
       }
     }
   } catch {
@@ -197,12 +228,34 @@ async function ProductContent({
   if (!product) {
     const allSiteProducts = siteData.collections.flatMap((c) => c.products);
     const siteMatch = allSiteProducts.find(
-      (p) => p.handle.toLowerCase() === decodedHandle
+      (p) =>
+        p.handle.toLowerCase() === decodedHandle ||
+        p.handle.toLowerCase() === cleanH ||
+        p.title.toLowerCase().trim() === decodedHandle
     );
     if (siteMatch) {
       product = rawProducts.find(
         (p) => p.title.toLowerCase().trim() === siteMatch.title.toLowerCase().trim()
       );
+      if (!product) {
+        return (
+          <ProductDetailClient
+            product={{
+              id: siteMatch.handle,
+              title: siteMatch.title,
+              handle: siteMatch.handle,
+              vendor: "SILLHOUETE",
+              body_html: "",
+              price: siteMatch.currentPrice,
+              comparePrice: siteMatch.comparePrice,
+              images: [siteMatch.primaryImage, ...(siteMatch.secondaryImage ? [siteMatch.secondaryImage] : [])],
+              tags: [],
+              collectionTitle: "Luxury Pret",
+            }}
+            similarProducts={[]}
+          />
+        );
+      }
     }
   }
 

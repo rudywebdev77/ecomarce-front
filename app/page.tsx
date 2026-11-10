@@ -56,21 +56,43 @@ async function LiveHomeCollections() {
         const cat = (p.category || "").toLowerCase();
         const pType = (p.product_type || "").toLowerCase();
         const tags = (p.tags || []).map((t: string) => t.toLowerCase());
+        const pTitle = (p.title || "").toLowerCase();
 
         if (tLower.includes("best") || lLower.includes("best")) {
           return p.is_featured || tags.some((t: string) => t.includes("best"));
         }
         if (tLower.includes("formal") || lLower.includes("formal")) {
-          return cat.includes("formal") || pType.includes("formal") || tags.some((t: string) => t.includes("formal"));
+          return (
+            cat.includes("formal") ||
+            pType.includes("formal") ||
+            tags.some((t: string) => t.includes("formal")) ||
+            cat.includes("lumiere") ||
+            cat.includes("zarqaa") ||
+            cat.includes("meeras") ||
+            cat.includes("tosha") ||
+            cat.includes("riwaj")
+          );
         }
-        if (tLower.includes("silk") || lLower.includes("silk")) {
-          return cat.includes("silk") || pType.includes("silk") || tags.some((t: string) => t.includes("silk"));
+        if (tLower.includes("silk") || lLower.includes("silk") || tLower.includes("solid")) {
+          return (
+            cat.includes("silk") ||
+            cat.includes("solid") ||
+            pType.includes("silk") ||
+            tags.some((t: string) => t.includes("silk") || t.includes("solid")) ||
+            pTitle.includes("silk")
+          );
         }
         if (tLower.includes("raha") || lLower.includes("raha")) {
-          return cat.includes("raha") || tags.some((t: string) => t.includes("raha"));
+          return cat.includes("raha") || tags.some((t: string) => t.includes("raha")) || pTitle.includes("raha");
         }
-        if (tLower.includes("maahi") || lLower.includes("maahi")) {
-          return cat.includes("maahi") || tags.some((t: string) => t.includes("maahi"));
+        if (tLower.includes("maahi") || lLower.includes("maahi") || tLower.includes("mahi")) {
+          return (
+            cat.includes("maahi") ||
+            cat.includes("mahi") ||
+            tags.some((t: string) => t.includes("maahi") || t.includes("mahi")) ||
+            pTitle.includes("maahi") ||
+            pTitle.includes("mahi")
+          );
         }
         return cat === tLower || cat.includes(lLower) || pType === tLower;
       })
@@ -111,6 +133,22 @@ async function LiveHomeCollections() {
         tags.some((t: string) => t.includes("sale")) ||
         p.is_sale === true ||
         (p.compare_at_price && Number(p.compare_at_price) > Number(p.price))
+      );
+    })
+    .map(mapDbProduct);
+
+  const bridalLiveProducts = dbProducts
+    .filter((p) => {
+      const cat = (p.category || "").toLowerCase();
+      const pType = (p.product_type || "").toLowerCase();
+      const tags = (p.tags || []).map((t: string) => t.toLowerCase());
+      return (
+        cat.includes("bridal") ||
+        cat.includes("birdal") ||
+        cat.includes("barat") ||
+        cat.includes("walima") ||
+        pType.includes("bridal") ||
+        tags.some((t: string) => t.includes("bridal") || t.includes("birdal") || t.includes("barat") || t.includes("walima"))
       );
     })
     .map(mapDbProduct);
@@ -171,6 +209,16 @@ async function LiveHomeCollections() {
           title={coll5.title}
           link={coll5.link}
           products={getMergedProducts(coll5.title, coll5.link, coll5.products)}
+          showViewAll={true}
+          viewAllTextColor="white"
+        />
+      )}
+      {bridalLiveProducts.length > 0 && (
+        <CollectionSection
+          id="live-bridal-couture"
+          title="BESPOKE BRIDAL COUTURE"
+          link="/collections/bridal-dresses"
+          products={bridalLiveProducts}
           showViewAll={true}
           viewAllTextColor="white"
         />

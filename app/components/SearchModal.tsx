@@ -72,10 +72,25 @@ export default function SearchModal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      closeSearch();
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return;
+
+    closeSearch();
+    const qLower = cleanQuery.toLowerCase();
+    const exactMatch = results.find(
+      (r) =>
+        r.title.toLowerCase().trim() === qLower ||
+        r.handle.toLowerCase().trim() === qLower
+    );
+    if (exactMatch) {
+      router.push(exactMatch.link || `/products/${exactMatch.handle}`);
+      return;
     }
+    if (results.length === 1) {
+      router.push(results[0].link || `/products/${results[0].handle}`);
+      return;
+    }
+    router.push(`/search?q=${encodeURIComponent(cleanQuery)}`);
   };
 
   if (!isSearchOpen) return null;
