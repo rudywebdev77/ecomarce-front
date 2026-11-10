@@ -100,8 +100,33 @@ async function LiveHomeCollections() {
     return merged;
   };
 
+  const saleLiveProducts = dbProducts
+    .filter((p) => {
+      const cat = (p.category || "").toLowerCase();
+      const pType = (p.product_type || "").toLowerCase();
+      const tags = (p.tags || []).map((t: string) => t.toLowerCase());
+      return (
+        cat.includes("sale") ||
+        pType.includes("sale") ||
+        tags.some((t: string) => t.includes("sale")) ||
+        p.is_sale === true ||
+        (p.compare_at_price && Number(p.compare_at_price) > Number(p.price))
+      );
+    })
+    .map(mapDbProduct);
+
   return (
     <>
+      {saleLiveProducts.length > 0 && (
+        <CollectionSection
+          id="festive-sale"
+          title="SILLHOUETE SALE / FESTIVE OFFERS"
+          link="/collections/sale-1"
+          products={saleLiveProducts}
+          showViewAll={true}
+          viewAllTextColor="red"
+        />
+      )}
       {coll1 && (
         <CollectionSection
           id={coll1.id}

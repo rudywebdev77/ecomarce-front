@@ -63,6 +63,18 @@ async function CollectionContent({ params }: PageProps) {
 
         const pTitle = (p.title || "").toLowerCase().trim();
 
+        // 0. Sale Collection (Check first for sale handles)
+        if (cleanHandle === "sale" || cleanHandle === "sale-1") {
+          return (
+            cat === "sale" ||
+            cat.includes("sale") ||
+            pType.includes("sale") ||
+            tags.some((t: string) => t === "sale" || t.includes("sale")) ||
+            p.is_sale === true ||
+            (p.compare_at_price && Number(p.compare_at_price) > Number(p.price))
+          );
+        }
+
         // Specific collection match by category, handle, or tags FIRST
         const matchesSpecific =
           cat === infoTitleLower ||
@@ -88,18 +100,7 @@ async function CollectionContent({ params }: PageProps) {
         }
 
         // Broad Parent Collections:
-        // 1. Sale
-        if (cleanHandle === "sale" || cleanHandle === "sale-1") {
-          return (
-            cat.includes("sale") ||
-            pType.includes("sale") ||
-            tags.some((t: string) => t.includes("sale")) ||
-            p.is_sale === true ||
-            Boolean(p.compare_at_price)
-          );
-        }
-
-        // 2. New Arrivals
+        // 1. New Arrivals
         if (cleanHandle === "new-arrivals") {
           return p.is_new === true || tags.some((t: string) => t.includes("new"));
         }
