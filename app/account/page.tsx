@@ -89,6 +89,17 @@ function AccountContent() {
   const supportPhone = settings?.phone || settings?.store_info?.phone || "";
   const estimatedDelivery = settings?.estimated_delivery || "3 - 7 Business Days (Worldwide Couture Delivery)";
 
+  const accountConfig = settings?.account_page || {};
+  const bannerSubtitle = accountConfig.banner_subtitle || "Sillhouete Atelier • Customer Care";
+  const bannerTitle = accountConfig.banner_title || "Customer Account & Orders";
+  const bannerDescription = accountConfig.banner_description || "Sign in with the email you used while shopping, or create an account to view your live order tracking.";
+  const emptyOrdersTitle = accountConfig.empty_orders_title || "No Shopping Orders Yet";
+  const emptyOrdersDesc = accountConfig.empty_orders_description || "When you purchase any Pakistani designer dress from Sillhouete, its live tailoring and delivery status will appear here automatically.";
+  const emptyOrdersBtnText = accountConfig.empty_orders_btn_text || "Explore Bridal & Formal Collections";
+  const emptyOrdersBtnLink = accountConfig.empty_orders_btn_link || "/collections/all";
+  const whatsappTemplate = accountConfig.whatsapp_inquiry_template || "Hello Sillhouete Boutique, I want to inquire about my order {order_id}.";
+  const helplineLabel = accountConfig.helpline_label || "Boutique Helpline";
+
   const handleLogout = () => {
     setToken(null);
     setCustomer(null);
@@ -431,9 +442,11 @@ function AccountContent() {
     setTimeout(() => setCopiedOrderId(false), 2000);
   };
 
-  // 5-Stage Stepper logic
+  // 5-Stage Stepper logic (Dynamic from MongoDB)
   const getStageInfo = (status: string) => {
     const s = (status || "").toLowerCase();
+    const stageDefs = accountConfig.stages || {};
+    if (stageDefs[s]) return stageDefs[s];
     if (s === "cancelled") {
       return { stage: 0, label: "Order Cancelled & Refunded", isCancelled: true };
     }
@@ -449,43 +462,45 @@ function AccountContent() {
     if (s === "processing") {
       return { stage: 2, label: "Atelier Stitching & Tailoring", isCancelled: false };
     }
-    return { stage: 1, label: "Order Placed & Confirmed", isCancelled: false };
+    return stageDefs.default || { stage: 1, label: "Order Placed & Confirmed", isCancelled: false };
   };
 
   const currentStage = activeOrder ? getStageInfo(activeOrder.order_status) : null;
 
-  const progressionSteps = [
-    {
-      step: 1,
-      title: "Order Placed",
-      desc: "Order confirmed & payment verified",
-      icon: "✓",
-    },
-    {
-      step: 2,
-      title: "Atelier Tailoring",
-      desc: "Bespoke stitching & luxury craftsmanship",
-      icon: "✂",
-    },
-    {
-      step: 3,
-      title: "Quality Check",
-      desc: "Hand inspection & signature packaging",
-      icon: "★",
-    },
-    {
-      step: 4,
-      title: "Dispatched",
-      desc: "Handed over to courier with tracking",
-      icon: "✈",
-    },
-    {
-      step: 5,
-      title: "Delivered",
-      desc: "Safely received at customer address",
-      icon: "♥",
-    },
-  ];
+  const progressionSteps = Array.isArray(accountConfig.progression_steps) && accountConfig.progression_steps.length > 0
+    ? accountConfig.progression_steps
+    : [
+        {
+          step: 1,
+          title: "Order Placed",
+          desc: "Order confirmed & payment verified",
+          icon: "✓",
+        },
+        {
+          step: 2,
+          title: "Atelier Tailoring",
+          desc: "Bespoke stitching & luxury craftsmanship",
+          icon: "✂",
+        },
+        {
+          step: 3,
+          title: "Quality Check",
+          desc: "Hand inspection & signature packaging",
+          icon: "★",
+        },
+        {
+          step: 4,
+          title: "Dispatched",
+          desc: "Handed over to courier with tracking",
+          icon: "✈",
+        },
+        {
+          step: 5,
+          title: "Delivered",
+          desc: "Safely received at customer address",
+          icon: "♥",
+        },
+      ];
 
   if (loadingAuth) {
     return (
@@ -504,13 +519,13 @@ function AccountContent() {
       <div className="max-w-[500px] mx-auto py-16 px-4 sm:px-6">
         <div className="text-center mb-8">
           <p className="text-[11px] font-sans-custom uppercase tracking-[0.25em] text-[#888888] font-bold mb-2">
-            Sillhouete Atelier &bull; Customer Care
+            {bannerSubtitle}
           </p>
           <h1 className="text-[26px] sm:text-[32px] font-semibold uppercase tracking-[0.05em] text-[#111111]">
-            Customer Account &amp; Orders
+            {bannerTitle}
           </h1>
           <p className="text-[13px] text-[#666666] font-sans-custom mt-2 leading-relaxed">
-            Sign in with the email you used while shopping, or create an account to view your live order tracking.
+            {bannerDescription}
           </p>
         </div>
 
@@ -1084,16 +1099,16 @@ function AccountContent() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
-          <h2 className="text-[20px] font-serif font-bold text-black">No Shopping Orders Yet</h2>
+          <h2 className="text-[20px] font-serif font-bold text-black">{emptyOrdersTitle}</h2>
           <p className="text-[13px] text-[#666666] max-w-[420px] mx-auto">
-            When you purchase any Pakistani designer dress from Sillhouete, its live tailoring and delivery status will appear here automatically.
+            {emptyOrdersDesc}
           </p>
           <div className="pt-2">
             <Link
-              href="/collections/all"
+              href={emptyOrdersBtnLink}
               className="inline-block bg-[#0e3359] hover:bg-[#0a2542] text-white px-8 py-3 text-[12px] font-bold uppercase tracking-[0.2em] rounded-md transition-colors"
             >
-              Explore Bridal &amp; Formal Collections
+              {emptyOrdersBtnText}
             </Link>
           </div>
         </div>
@@ -1212,7 +1227,7 @@ function AccountContent() {
 
                     {/* Step Nodes */}
                     <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 sm:gap-2 relative z-10">
-                      {progressionSteps.map((st) => {
+                      {progressionSteps.map((st: any) => {
                         const isCompleted = (currentStage?.stage || 1) >= st.step;
                         const isCurrent = (currentStage?.stage || 1) === st.step;
 
@@ -1279,7 +1294,7 @@ function AccountContent() {
                 {rawWhatsApp ? (
                   <a
                     href={`https://wa.me/${rawWhatsApp}?text=${encodeURIComponent(
-                      `Hello Sillhouete Boutique, I want to inquire about my order ${activeOrder.id}.`
+                      whatsappTemplate.replace("{order_id}", activeOrder.id || "")
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1427,7 +1442,7 @@ function AccountContent() {
                 {supportPhone ? (
                   <div className="pt-4 border-t border-[#f0f0f0]">
                     <h4 className="font-bold text-[12px] uppercase tracking-wider text-black mb-2">
-                      Boutique Helpline
+                      {helplineLabel}
                     </h4>
                     <a
                       href={`tel:${supportPhone.replace(/[^0-9]/g, "")}`}
