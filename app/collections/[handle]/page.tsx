@@ -6,6 +6,7 @@ import Footer from "../../components/Footer";
 import MobileNavDrawer from "../../components/MobileNavDrawer";
 import CartDrawer from "../../components/CartDrawer";
 import SearchModal from "../../components/SearchModal";
+import ProductQuickViewModal from "../../components/ProductQuickViewModal";
 import CurrencySwitcher from "../../components/CurrencySwitcher";
 import WhatsAppButton from "../../components/WhatsAppButton";
 import CollectionClient from "./CollectionClient";
@@ -83,28 +84,39 @@ async function CollectionContent({ params }: PageProps) {
           );
         }
 
+        // Special exact matching for Maahi II Luxury Eid Pret
+        if (cleanHandle === "maahi-ii-luxury-eid-pret") {
+          return (
+            cat.includes("maahi ii") ||
+            tags.some((t: string) => t.includes("maahi ii") || t.includes("mahi ii")) ||
+            ["camilla", "iris-rm-03", "freya", "smira", "ivy", "bella", "vienna", "livia"].includes(p.handle?.toLowerCase())
+          );
+        }
+
         // Specific collection match by category, handle, or tags FIRST
+        const isGenericCat = ["luxury pret", "pret", "formal", "formals", "bridal", "birdal", "accessories"].includes(cat);
         const matchesSpecific =
           cat === infoTitleLower ||
           cat === cleanHandle ||
-          (cat && (infoTitleLower.includes(cat) || cleanHandle.includes(cat) || cat.includes(cleanHandle))) ||
+          (!isGenericCat && cat && (infoTitleLower.includes(cat) || cleanHandle.includes(cat) || cat.includes(cleanHandle))) ||
           tags.some(
             (t: string) =>
               t === infoTitleLower ||
               t === cleanHandle ||
-              infoTitleLower.includes(t) ||
-              cleanHandle.includes(t) ||
+              (!isGenericCat && (infoTitleLower.includes(t) || cleanHandle.includes(t))) ||
               (t.length >= 4 && cleanHandle.includes(t.replace(/[^a-z0-9]+/g, "-")))
           );
 
         if (matchesSpecific) return true;
 
-        // Distinct keywords match for specific subcollections (e.g. "maahi", "husan ara", "zarqaa", "meeras", "lumiere", "tosha kinari", "opal")
-        const rootWords = cleanHandle
-          .split("-")
-          .filter((w) => w.length >= 4 && !["luxury", "pret", "formal", "formals", "bridal", "birdal", "dresses", "collection", "solids"].includes(w));
-        if (rootWords.length > 0 && rootWords.some((rw) => pTitle.includes(rw) || cat.includes(rw) || tags.some((t: string) => t.includes(rw)))) {
-          return true;
+        // Distinct keywords match for specific subcollections (e.g. "husan ara", "zarqaa", "meeras", "lumiere", "tosha kinari", "opal")
+        if (cleanHandle !== "maahi-ii-luxury-eid-pret") {
+          const rootWords = cleanHandle
+            .split("-")
+            .filter((w) => w.length >= 4 && !["luxury", "pret", "formal", "formals", "bridal", "birdal", "dresses", "collection", "solids"].includes(w));
+          if (rootWords.length > 0 && rootWords.some((rw) => pTitle.includes(rw) || cat.includes(rw) || tags.some((t: string) => t.includes(rw)))) {
+            return true;
+          }
         }
 
         // Broad Parent Collections:
@@ -202,11 +214,12 @@ async function CollectionContent({ params }: PageProps) {
     // If backend fails, fallback gracefully to static products
   }
 
-  // Prepend live products from database so newly added outfits appear at the very front
-  const combined: Product[] = [...liveProducts];
-  const seenHandles = new Set(liveProducts.map((p) => p.handle.toLowerCase()));
+  // Curated static products define authentic order, imagery and pricing for this collection.
+  // Newly added products from DB not in static set are appended.
+  const combined: Product[] = [...staticProducts];
+  const seenHandles = new Set(staticProducts.map((p) => p.handle.toLowerCase()));
 
-  for (const p of staticProducts) {
+  for (const p of liveProducts) {
     if (!seenHandles.has(p.handle.toLowerCase())) {
       seenHandles.add(p.handle.toLowerCase());
       combined.push(p);
@@ -245,6 +258,7 @@ export default function CollectionPage({ params }: PageProps) {
       <MobileNavDrawer />
       <CartDrawer />
       <SearchModal />
+      <ProductQuickViewModal />
       <CurrencySwitcher />
       <WhatsAppButton />
     </div>

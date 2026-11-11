@@ -17,7 +17,7 @@ export function getStripeInstance(): Stripe | null {
   if (secretKey && !secretKey.includes("MockTestKey")) {
     try {
       return new Stripe(secretKey, {
-        apiVersion: "2025-02-24.acacia" as any,
+        apiVersion: "2026-03-25.dahlia" as any,
       });
     } catch (err: any) {
       console.warn("Stripe initialization skipped:", err.message);

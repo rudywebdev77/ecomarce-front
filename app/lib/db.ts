@@ -12,15 +12,16 @@ import { Admin } from "./models/Admin";
 
 // Setup DNS servers for reliable MongoDB SRV lookup
 try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
 } catch {
   // Ignore in browser or edge
 }
 
 const isProduction = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
 const rawUri = (process.env.MONGODB_URI || "").trim().replace(/^["']|["']$/g, "");
+const directUriEnv = (process.env.MONGODB_DIRECT_URI || "").trim().replace(/^["']|["']$/g, "");
 const LOCAL_URI = "mongodb://127.0.0.1:27017/sillhouete_db";
-const MONGODB_URI = rawUri || (isProduction ? "" : LOCAL_URI);
+const MONGODB_URI = directUriEnv || rawUri || (isProduction ? "" : LOCAL_URI);
 
 interface GlobalMongoose {
   conn: typeof mongoose | null;
@@ -33,7 +34,7 @@ declare global {
   var mongooseCache: GlobalMongoose | undefined;
 }
 
-let cached: GlobalMongoose = global.mongooseCache || {
+const cached: GlobalMongoose = global.mongooseCache || {
   conn: null,
   promise: null,
   isSeeded: false,
@@ -57,6 +58,63 @@ function sanitizeMongoUri(uri: string): string {
     }
   } catch {}
   return uri;
+}
+
+/**
+ * Resolves mongodb+srv:// to direct replica-set mongodb:// connection string
+ * using reliable Google/Cloudflare DNS to avoid Windows local DNS ECONNREFUSED errors.
+ */
+async function resolveMongoSrvToDirectUri(uri: string): Promise<string> {
+  if (!uri.startsWith("mongodb+srv://")) {
+    return uri;
+  }
+
+  try {
+    try {
+      dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
+    } catch {}
+
+    const raw = uri.replace(/^mongodb\+srv:\/\//, "http://");
+    const parsed = new URL(raw);
+    const host = parsed.hostname;
+    const auth = parsed.username
+      ? `${parsed.username}${parsed.password ? `:${parsed.password}` : ""}@`
+      : "";
+    const pathname = parsed.pathname || "/sillhouete_db";
+    const searchParams = new URLSearchParams(parsed.search);
+
+    const srvRecords = await dns.promises.resolveSrv(`_mongodb._tcp.${host}`);
+    if (!srvRecords || srvRecords.length === 0) {
+      return uri;
+    }
+
+    const hostList = srvRecords.map((r) => `${r.name}:${r.port}`).join(",");
+
+    try {
+      const txtRecords = await dns.promises.resolveTxt(host);
+      if (txtRecords && txtRecords.length > 0) {
+        const txtParams = txtRecords.map((t) => t.join("")).join("&");
+        const txtSearchParams = new URLSearchParams(txtParams);
+        txtSearchParams.forEach((val, key) => {
+          if (!searchParams.has(key)) {
+            searchParams.set(key, val);
+          }
+        });
+      }
+    } catch {}
+
+    if (!searchParams.has("ssl")) {
+      searchParams.set("ssl", "true");
+    }
+
+    const finalQuery = searchParams.toString();
+    const directUri = `mongodb://${auth}${hostList}${pathname}${finalQuery ? `?${finalQuery}` : ""}`;
+    console.log("✓ Successfully resolved MongoDB SRV to direct replica-set URI");
+    return directUri;
+  } catch (err: any) {
+    console.warn("⚠️ DNS SRV auto-resolution fallback:", err.message);
+    return uri;
+  }
 }
 
 async function autoSeedDefaults() {
@@ -125,14 +183,19 @@ export async function connectDB(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
-    const primaryUri = sanitizeMongoUri(MONGODB_URI);
+    let primaryUri = sanitizeMongoUri(MONGODB_URI);
 
     if (!primaryUri) {
       throw new Error("MONGODB_URI is not set in environment variables");
     }
 
+    // If SRV URI, resolve it to direct URI to prevent ECONNREFUSED on Windows
+    if (primaryUri.startsWith("mongodb+srv://")) {
+      primaryUri = await resolveMongoSrvToDirectUri(primaryUri);
+    }
+
     const opts = {
-      serverSelectionTimeoutMS: 15000,
+      serverSelectionTimeoutMS: 10000,
       bufferCommands: false,
     };
 
@@ -144,21 +207,20 @@ export async function connectDB(): Promise<typeof mongoose> {
         return m;
       })
       .catch(async (err) => {
-        console.error("❌ Primary MongoDB Connection Error:", err.message);
+        console.warn("⚠️ Primary MongoDB Connection Issue:", err.message);
 
         // Fallback to local MongoDB in development if available
         if (!isProduction && primaryUri !== LOCAL_URI) {
-          console.warn("⚠️ Attempting fallback to local MongoDB (127.0.0.1:27017)...");
           try {
             const localM = await mongoose.connect(LOCAL_URI, {
-              serverSelectionTimeoutMS: 5000,
+              serverSelectionTimeoutMS: 3000,
               bufferCommands: false,
             });
             console.log("✓ Fallback Local MongoDB Connected Successfully");
             await autoSeedDefaults();
             return localM;
           } catch (localErr: any) {
-            console.error("❌ Fallback MongoDB Connection Error:", localErr.message);
+            console.warn("⚠️ Fallback MongoDB Note:", localErr.message);
           }
         }
         throw err;
@@ -185,4 +247,3 @@ export {
   Setting,
   Admin,
 };
-

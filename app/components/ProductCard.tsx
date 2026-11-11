@@ -33,10 +33,34 @@ export default function ProductCard({
 }) {
   const { currentCurrency } = useStore();
 
+  const numCompare = product.comparePrice
+    ? parseFloat(
+        String(product.comparePrice)
+          .replace(/^(Rs\.?|PKR)\s*/i, "")
+          .replace(/,/g, "")
+          .match(/\d+(\.\d+)?/)?.[0] || "0"
+      )
+    : 0;
+
+  const numCurrent = product.currentPrice
+    ? parseFloat(
+        String(product.currentPrice)
+          .replace(/^(Rs\.?|PKR)\s*/i, "")
+          .replace(/,/g, "")
+          .match(/\d+(\.\d+)?/)?.[0] || "0"
+      )
+    : 0;
+
   const hasComparePrice =
-    product.comparePrice &&
+    numCompare > numCurrent &&
+    Boolean(product.comparePrice) &&
     product.comparePrice !== product.currentPrice &&
     product.comparePrice !== "Rs.0";
+
+  const savePercent =
+    hasComparePrice && numCompare > 0
+      ? Math.round(((numCompare - numCurrent) / numCompare) * 100)
+      : 0;
 
   const hasSecondary = Boolean(
     product.secondaryImage &&
@@ -52,10 +76,14 @@ export default function ProductCard({
         className="block relative w-full overflow-hidden bg-[#f5f5f5] pb-[150%] cursor-pointer"
       >
         {/* Product Badges */}
-        {product.isNew && <span className="product-badge-new">New</span>}
         {(product.isSale || hasComparePrice) && (
-          <span className="absolute top-2 left-2 bg-[#111111] text-white text-[11px] font-normal tracking-wide px-2 py-0.5 z-[3]">
+          <span className="absolute top-2 left-2 bg-[#111111] text-white text-[11px] font-normal tracking-wide px-2 py-0.5 z-[3] uppercase">
             Sale
+          </span>
+        )}
+        {product.isNew && !product.isSoldOut && (
+          <span className="absolute top-2 right-2 bg-white text-black text-[11px] font-semibold tracking-normal px-2 py-0.5 rounded-[2px] shadow-xs z-[3] uppercase">
+            New
           </span>
         )}
         {product.isSoldOut && (
@@ -101,15 +129,20 @@ export default function ProductCard({
           {product.title}
         </Link>
 
-        <div className="mt-1 flex items-center justify-center space-x-2 text-[15px] text-[#1c1d1d] font-serif">
+        <div className="mt-1 flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 text-[13.5px] sm:text-[14px] text-[#111111] font-serif">
           {hasComparePrice && (
-            <span className="text-[#888888] line-through text-[12px]">
+            <span className="text-[#888888] line-through text-[12px] sm:text-[13px]">
               {formatPrice(product.comparePrice!, currentCurrency)}
             </span>
           )}
-          <span className={hasComparePrice ? "text-[#c20000] font-medium" : ""}>
+          <span className="text-[#111111] font-normal">
             {formatPrice(product.currentPrice, currentCurrency)}
           </span>
+          {savePercent > 0 && (
+            <span className="text-[#e53935] text-[12px] sm:text-[13px] font-normal">
+              Save {savePercent}%
+            </span>
+          )}
         </div>
       </div>
     </div>

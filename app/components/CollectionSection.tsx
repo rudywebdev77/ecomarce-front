@@ -33,6 +33,35 @@ const HOVER_CYCLE_MS = 1100;
 function ProductCard({ product }: { product: Product }) {
   const { currentCurrency } = useStore();
 
+  const numCompare = product.comparePrice
+    ? parseFloat(
+        String(product.comparePrice)
+          .replace(/^(Rs\.?|PKR)\s*/i, "")
+          .replace(/,/g, "")
+          .match(/\d+(\.\d+)?/)?.[0] || "0"
+      )
+    : 0;
+
+  const numCurrent = product.currentPrice
+    ? parseFloat(
+        String(product.currentPrice)
+          .replace(/^(Rs\.?|PKR)\s*/i, "")
+          .replace(/,/g, "")
+          .match(/\d+(\.\d+)?/)?.[0] || "0"
+      )
+    : 0;
+
+  const hasComparePrice =
+    numCompare > numCurrent &&
+    Boolean(product.comparePrice) &&
+    product.comparePrice !== product.currentPrice &&
+    product.comparePrice !== "Rs.0";
+
+  const savePercent =
+    hasComparePrice && numCompare > 0
+      ? Math.round(((numCompare - numCurrent) / numCompare) * 100)
+      : 0;
+
   // Unique, non-empty list of images: primary first
   const images = Array.from(
     new Set(
@@ -81,7 +110,12 @@ function ProductCard({ product }: { product: Product }) {
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
-        {/* Product Badge */}
+        {/* Product Badges */}
+        {hasComparePrice && (
+          <span className="absolute top-2 left-2 bg-[#111111] text-white text-[11px] font-normal tracking-wide px-2 py-0.5 z-[3] uppercase">
+            Sale
+          </span>
+        )}
         {product.isNew && <span className="product-badge-new">New</span>}
 
         {/* Primary Image - stays solid at z-1 */}
@@ -120,15 +154,20 @@ function ProductCard({ product }: { product: Product }) {
           {product.title}
         </Link>
 
-        <div className="mt-1 flex items-center justify-center space-x-2 text-[12.5px] sm:text-[15px] text-[#1c1d1d] font-serif">
-          {product.comparePrice && (
+        <div className="mt-1 flex items-center justify-center flex-wrap gap-x-2 gap-y-0.5 text-[12.5px] sm:text-[14px] text-[#111111] font-serif">
+          {hasComparePrice && (
             <span className="text-[#888888] line-through text-[11px] sm:text-[12px]">
               {formatPrice(product.comparePrice, currentCurrency)}
             </span>
           )}
-          <span className={product.comparePrice ? "text-[#c20000] font-medium" : ""}>
+          <span className="text-[#111111] font-normal">
             {formatPrice(product.currentPrice, currentCurrency)}
           </span>
+          {savePercent > 0 && (
+            <span className="text-[#e53935] text-[11px] sm:text-[12px] font-normal">
+              Save {savePercent}%
+            </span>
+          )}
         </div>
       </div>
     </div>
