@@ -1,0 +1,12 @@
+[
+  {
+    "id": "admin_1",
+    "username": "admin",
+    "email": "admin@sillhouete.com",
+    "password": "$2b$10$9RF/spX1IJNfiYl0bxeAueTIReW.350gSHS.lxoi2HxyAK9GqSwDi",
+    "name": "Sillhouete Boutique Admin",
+    "role": "superadmin",
+    "created_at": "2026-11-02T09:59:32.489Z",
+    "updated_at": "2026-11-02T09:59:32.491Z"
+  }
+]

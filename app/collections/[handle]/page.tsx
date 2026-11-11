@@ -12,6 +12,7 @@ import CollectionClient from "./CollectionClient";
 import { getCollectionData, COLLECTIONS_REGISTRY } from "../../lib/collections";
 import { API_BASE } from "../../lib/api";
 import { Product } from "../../components/ProductCard";
+import { connectDB, Product as ProductModel } from "../../lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +51,17 @@ async function CollectionContent({ params }: PageProps) {
 
   let liveProducts: Product[] = [];
   try {
-    const res = await fetch(`${API_BASE}/products?limit=500`, { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
-      const allDb = (data.products || []) as any[];
+    let allDb: any[] = [];
+    try {
+      await connectDB();
+      allDb = await ProductModel.find().lean();
+    } catch {
+      const res = await fetch(`${API_BASE}/products?limit=500`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        allDb = (data.products || []) as any[];
+      }
+    }
 
       const matched = allDb.filter((p) => {
         const cat = (p.category || "").toLowerCase().trim();
@@ -190,7 +198,6 @@ async function CollectionContent({ params }: PageProps) {
         productType: p.category || p.product_type || info.title,
         createdAt: p.created_at,
       }));
-    }
   } catch {
     // If backend fails, fallback gracefully to static products
   }

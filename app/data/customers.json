@@ -1,0 +1,58 @@
+[
+  {
+    "first_name": "Maham",
+    "last_name": "Iqbal",
+    "email": "maham.iqbal@example.com",
+    "phone": "+92 321 4455667",
+    "address": "Villa 12, Sector Y, Phase 3, DHA",
+    "city": "Lahore",
+    "country": "Pakistan",
+    "total_orders": 1,
+    "total_spent": 45000,
+    "id": "1793614268116ztd9g",
+    "created_at": "2026-11-02T10:11:08.116Z",
+    "updated_at": "2026-11-02T10:11:08.116Z"
+  },
+  {
+    "id": "cust_3",
+    "first_name": "Zainab",
+    "last_name": "Malik",
+    "email": "zainab.malik@example.com",
+    "phone": "+1 630 555 0199",
+    "address": "450 West 42nd St, Apt 18B",
+    "city": "New York",
+    "country": "United States",
+    "total_orders": 1,
+    "total_spent": 98000,
+    "created_at": "2026-10-25T09:59:32.515Z",
+    "updated_at": "2026-11-02T09:59:32.516Z"
+  },
+  {
+    "id": "cust_2",
+    "first_name": "Fatima",
+    "last_name": "Siddiqui",
+    "email": "fatima.siddiqui@example.co.uk",
+    "phone": "+44 7911 123456",
+    "address": "14 Kensington High Street",
+    "city": "London",
+    "country": "United Kingdom",
+    "total_orders": 1,
+    "total_spent": 245000,
+    "created_at": "2026-10-18T09:59:32.515Z",
+    "updated_at": "2026-11-02T09:59:32.516Z"
+  },
+  {
+    "id": "cust_1",
+    "first_name": "Ayesha",
+    "last_name": "Khan",
+    "email": "ayesha.khan@example.com",
+    "phone": "+92 300 1234567",
+    "address": "House 42, Street 10, DHA Phase 6",
+    "city": "Lahore",
+    "country": "Pakistan",
+    "total_orders": 2,
+    "total_spent": 125000,
+    "created_at": "2026-10-03T09:59:32.515Z",
+    "updated_at": "2026-11-02T09:59:32.515Z"
+  }
+]

@@ -1,0 +1,41 @@
+[
+  {
+    "name": "Dr. Nadia Arshad",
+    "email": "nadia.arshad@example.com",
+    "phone": "+92 333 1122334",
+    "subject": "Custom Walima Bridal Consultation",
+    "message": "Hello, I want to book a bridal consultation for next month at your Gulberg studio.",
+    "status": "replied",
+    "reply": "Dear Dr. Nadia, we have booked your appointment for Saturday at 3:00 PM at our Gulberg studio.",
+    "replied_at": "2026-11-02T10:11:08.176Z",
+    "id": "1793614268149sjqah",
+    "created_at": "2026-11-02T10:11:08.150Z",
+    "updated_at": "2026-11-02T10:11:08.177Z"
+  },
+  {
+    "id": "cnt_2",
+    "name": "Hina Tariq",
+    "email": "hina.tariq@gmail.com",
+    "phone": "+1 416 555 7890",
+    "subject": "Custom Measurements for International Delivery to Toronto",
+    "message": "Hi team, I would like to order the Zarqaa raw silk outfit for Eid, but I need custom sleeve length and shoulder width. How do I provide measurements?",
+    "status": "new",
+    "reply": "",
+    "created_at": "2026-11-01T09:59:32.726Z",
+    "replied_at": null,
+    "updated_at": "2026-11-02T09:59:32.728Z"
+  },
+  {
+    "id": "cnt_1",
+    "name": "Sara Farooq",
+    "email": "sara.farooq@example.com",
+    "phone": "+92 321 9876543",
+    "subject": "Bespoke Bridal Appointment & Custom Color Inquiry",
+    "message": "Hello, I am getting married in December and would love to customize the Maahi bridal lehenga into a deeper crimson tone. Can I book a studio consultation in Gulberg?",
+    "status": "replied",
+    "reply": "Dear Sara, thank you for contacting Sillhouete! We have scheduled our bridal consultant to message you on WhatsApp to book your studio fitting.",
+    "created_at": "2026-10-30T09:59:32.726Z",
+    "replied_at": "2026-10-31T09:59:32.726Z",
+    "updated_at": "2026-11-02T09:59:32.726Z"
+  }
+]

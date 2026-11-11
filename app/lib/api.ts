@@ -1,8 +1,28 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const getApiBase = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    return "/api";
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api`;
+  }
+  return "http://localhost:3000/api";
+};
+
+export const API_BASE = getApiBase();
 
 export async function fetchFromApi(endpoint: string, options: RequestInit = {}) {
-  const url = `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-  
+  const base =
+    typeof window !== "undefined"
+      ? "/api"
+      : process.env.NEXT_PUBLIC_API_URL ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api` : "http://localhost:3000/api");
+
+  const cleanEndpoint = endpoint.startsWith("/api") ? endpoint.replace(/^\/api/, "") : endpoint;
+  const url = `${base.replace(/\/+$/, "")}${cleanEndpoint.startsWith("/") ? cleanEndpoint : `/${cleanEndpoint}`}`;
+
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
@@ -26,6 +46,3 @@ export async function fetchFromApi(endpoint: string, options: RequestInit = {}) 
     throw err;
   }
 }
-
-export { API_BASE };
-

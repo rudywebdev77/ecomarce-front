@@ -12,6 +12,7 @@ import CurrencySwitcher from "../../components/CurrencySwitcher";
 import WhatsAppButton from "../../components/WhatsAppButton";
 import ProductDetailClient from "./ProductDetailClient";
 import { API_BASE } from "../../lib/api";
+import { connectDB, Product } from "../../lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -49,20 +50,37 @@ export async function generateMetadata({
   const cleanH = decodedHandle.replace(/[^a-z0-9\-]+/g, "");
 
   try {
-    let res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
-    if (!res.ok && cleanH && cleanH !== decodedHandle) {
-      res = await fetch(`${API_BASE}/products/${encodeURIComponent(cleanH)}`, { cache: "no-store" });
+    await connectDB();
+    const escaped = decodedHandle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(decodedHandle);
+
+    let doc = await Product.findOne({
+      $or: [
+        { handle: decodedHandle },
+        { handle: cleanH },
+        { id: decodedHandle },
+        { title: new RegExp(`^${escaped}$`, "i") },
+        { _id: isMongoId ? decodedHandle : null },
+      ],
+    }).lean();
+
+    if (!doc && cleanH) {
+      doc = await Product.findOne({
+        $or: [
+          { handle: new RegExp(`^${cleanH}$`, "i") },
+          { handle: new RegExp(cleanH, "i") },
+          { title: new RegExp(escaped, "i") },
+        ],
+      }).lean();
     }
-    if (res.ok) {
-      const data = await res.json();
-      if (data.product) {
-        return {
-          title: `${data.product.title} – Sillhouete`,
-          description:
-            data.product.description ||
-            `Shop ${data.product.title} online at Sillhouete. Luxury Pakistani couture, bridal and formal wear.`,
-        };
-      }
+
+    if (doc) {
+      return {
+        title: `${doc.title} – Sillhouete`,
+        description:
+          doc.description ||
+          `Shop ${doc.title} online at Sillhouete. Luxury Pakistani couture, bridal and formal wear.`,
+      };
     }
   } catch {
     // ignore and fallback
@@ -104,36 +122,51 @@ async function ProductContent({
   let dbSimilar: any[] = [];
 
   try {
-    let res = await fetch(`${API_BASE}/products/${encodeURIComponent(decodedHandle)}`, { cache: "no-store" });
-    if (!res.ok && cleanH && cleanH !== decodedHandle) {
-      res = await fetch(`${API_BASE}/products/${encodeURIComponent(cleanH)}`, { cache: "no-store" });
+    await connectDB();
+    const escaped = decodedHandle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(decodedHandle);
+
+    dbProduct = await Product.findOne({
+      $or: [
+        { handle: decodedHandle },
+        { handle: cleanH },
+        { id: decodedHandle },
+        { title: new RegExp(`^${escaped}$`, "i") },
+        { _id: isMongoId ? decodedHandle : null },
+      ],
+    }).lean();
+
+    if (!dbProduct && cleanH) {
+      dbProduct = await Product.findOne({
+        $or: [
+          { handle: new RegExp(`^${cleanH}$`, "i") },
+          { handle: new RegExp(cleanH, "i") },
+          { title: new RegExp(escaped, "i") },
+        ],
+      }).lean();
     }
-    if (res.ok) {
-      const data = await res.json();
-      if (data.product) {
-        dbProduct = data.product;
-        dbSimilar = data.similar || [];
-      }
-    } else {
-      // Fallback search query on database
-      const searchRes = await fetch(`${API_BASE}/products?search=${encodeURIComponent(decodedHandle)}&limit=1`, { cache: "no-store" });
-      if (searchRes.ok) {
-        const sData = await searchRes.json();
-        if (sData.products && sData.products.length > 0) {
-          const match = sData.products.find(
-            (p: any) =>
-              p.handle.toLowerCase() === decodedHandle ||
-              p.handle.toLowerCase() === cleanH ||
-              p.title.toLowerCase().trim() === decodedHandle
-          );
-          if (match) {
-            dbProduct = match;
-          }
-        }
-      }
+
+    if (!dbProduct) {
+      const searchRegex = new RegExp(escaped, "i");
+      dbProduct = await Product.findOne({
+        $or: [
+          { title: searchRegex },
+          { handle: searchRegex },
+          { tags: searchRegex },
+        ],
+      }).lean();
     }
-  } catch {
-    // Database connection or endpoint error fallback to local json
+
+    if (dbProduct) {
+      dbSimilar = await Product.find({
+        id: { $ne: dbProduct.id },
+        category: dbProduct.category,
+      })
+        .limit(4)
+        .lean();
+    }
+  } catch (err) {
+    console.warn("DB query in ProductContent:", err);
   }
 
   // 1. If found in Database (e.g. added via Admin panel)

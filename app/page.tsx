@@ -17,6 +17,7 @@ import CurrencySwitcher from "./components/CurrencySwitcher";
 import WhatsAppButton from "./components/WhatsAppButton";
 import { API_BASE } from "./lib/api";
 import { Product } from "./components/CollectionSection";
+import { connectDB, Product as ProductModel } from "./lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,15 @@ async function LiveHomeCollections() {
 
   let dbProducts: any[] = [];
   try {
-    const res = await fetch(`${API_BASE}/products?limit=150`, { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
-      dbProducts = data.products || [];
+    try {
+      await connectDB();
+      dbProducts = await ProductModel.find().lean();
+    } catch {
+      const res = await fetch(`${API_BASE}/products?limit=150`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        dbProducts = data.products || [];
+      }
     }
   } catch {
     // fallback gracefully
