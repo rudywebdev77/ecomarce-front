@@ -38,3 +38,4 @@ const ContactSchema = new Schema<IContact>(
 
 export const Contact: Model<IContact> =
   mongoose.models.Contact || mongoose.model<IContact>("Contact", ContactSchema);
+

@@ -101,3 +101,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to record order" }, { status: 500 });
   }
 }
+

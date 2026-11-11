@@ -27,3 +27,4 @@ const AdminSchema = new Schema<IAdmin>(
 
 export const Admin: Model<IAdmin> =
   mongoose.models.Admin || mongoose.model<IAdmin>("Admin", AdminSchema);
+

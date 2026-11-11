@@ -30,3 +30,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message || "Base64 upload failed" }, { status: 500 });
   }
 }
+

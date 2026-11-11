@@ -301,3 +301,4 @@ export const COMPLETE_CATEGORIES: DefaultCategory[] = [
     ],
   },
 ];
+

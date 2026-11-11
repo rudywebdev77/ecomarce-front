@@ -25,3 +25,4 @@ export function getStripeInstance(): Stripe | null {
   }
   return null;
 }
+

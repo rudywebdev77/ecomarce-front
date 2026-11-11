@@ -22,3 +22,4 @@ export function saveBufferToUploads(buffer: Buffer, originalname: string): { url
     size: buffer.length,
   };
 }
+

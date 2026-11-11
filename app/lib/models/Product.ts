@@ -90,3 +90,4 @@ ProductSchema.index({ title: "text", description: "text", handle: "text", tags: 
 
 export const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
+

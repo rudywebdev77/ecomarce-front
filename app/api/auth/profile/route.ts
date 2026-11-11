@@ -66,3 +66,4 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: err.message || "Failed to update admin account settings" }, { status: 500 });
   }
 }
+

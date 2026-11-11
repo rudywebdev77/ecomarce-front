@@ -136,11 +136,6 @@ export async function connectDB(): Promise<typeof mongoose> {
       bufferCommands: false,
     };
 
-    try {
-      const dns = await import("node:dns");
-      dns.setServers(["8.8.8.8", "1.1.1.1"]);
-    } catch {}
-
     cached.promise = mongoose
       .connect(primaryUri, opts)
       .then(async (m) => {
@@ -190,3 +185,4 @@ export {
   Setting,
   Admin,
 };
+

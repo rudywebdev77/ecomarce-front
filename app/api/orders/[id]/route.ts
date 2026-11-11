@@ -73,3 +73,4 @@ export async function PATCH(req: NextRequest, { params }: RouteProps) {
 export async function PUT(req: NextRequest, props: RouteProps) {
   return PATCH(req, props);
 }
+

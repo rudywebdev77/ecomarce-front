@@ -117,3 +117,4 @@ export async function DELETE(
     return NextResponse.json({ error: "Failed to delete blog post" }, { status: 500 });
   }
 }
+

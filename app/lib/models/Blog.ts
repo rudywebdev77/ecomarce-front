@@ -10,7 +10,7 @@ export interface IBlog extends Document {
   featured_image: string;
   tags: string[];
   published: boolean;
-  published_at?: Date | null;
+  published_at: Date;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -35,3 +35,4 @@ const BlogSchema = new Schema<IBlog>(
 
 export const Blog: Model<IBlog> =
   mongoose.models.Blog || mongoose.model<IBlog>("Blog", BlogSchema);
+

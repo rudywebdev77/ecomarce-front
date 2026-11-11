@@ -141,3 +141,4 @@ export async function DELETE(req: NextRequest, { params }: RouteProps) {
     return NextResponse.json({ error: err.message || "Failed to delete product" }, { status: 500 });
   }
 }
+
