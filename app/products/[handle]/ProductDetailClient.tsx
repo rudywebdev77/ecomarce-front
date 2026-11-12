@@ -7,7 +7,7 @@ import { useStore, formatPrice, parsePriceToNumber } from "../../store/useStore"
 import ProductReviewsWidget from "../../components/ProductReviewsWidget";
 import FeaturedReviewsCarousel from "../../components/FeaturedReviewsCarousel";
 import KeyActivesSection from "../../components/KeyActivesSection";
-import FloatingProductVideo from "../../components/FloatingProductVideo";
+import FloatingProductVideo, { extractYouTubeId, normalizeMediaUrl } from "../../components/FloatingProductVideo";
 
 export interface ProductDetailProps {
   product: {
@@ -71,7 +71,35 @@ export default function ProductDetailClient({
     }
   }, [activeImageIndex]);
 
-  const images = product.images.length > 0 ? product.images : ["/favicon.ico"];
+  const rawImages =
+    product.images && product.images.length > 0
+      ? product.images.map(normalizeMediaUrl).filter(Boolean)
+      : [];
+  const rawVideo = normalizeMediaUrl(product.video_url);
+
+  interface MediaItem {
+    type: "image" | "video";
+    src: string;
+    poster?: string;
+  }
+
+  const mediaItems: MediaItem[] = [
+    ...rawImages.map((img) => ({ type: "image" as const, src: img })),
+  ];
+
+  if (rawVideo) {
+    mediaItems.push({
+      type: "video",
+      src: rawVideo,
+      poster: rawImages[0] || "",
+    });
+  }
+
+  if (mediaItems.length === 0) {
+    mediaItems.push({ type: "image", src: "/favicon.ico" });
+  }
+
+  const images = rawImages.length > 0 ? rawImages : ["/favicon.ico"];
 
   // Base price calculation
   const rawPriceNum = parsePriceToNumber(product.price) || 32900;
@@ -131,7 +159,7 @@ export default function ProductDetailClient({
           {/* ================= LEFT: MEDIA GALLERY (6 Cols on LG - 50% width - STICKY) ================= */}
           <div className="lg:col-span-6 flex flex-col-reverse md:flex-row gap-4 product-gallery-sticky lg:sticky lg:top-6 self-start z-10 md:items-stretch">
             {/* Vertical Thumbnail Strip */}
-            {images.length > 1 && (
+            {mediaItems.length > 1 && (
               <div className="relative md:w-[80px] shrink-0 flex flex-col justify-between">
                 {/* Scroll Up Arrow */}
                 {activeImageIndex > 0 ? (
@@ -151,7 +179,7 @@ export default function ProductDetailClient({
 
                 {/* Thumbnails scroller */}
                 <div className="flex md:flex-col items-center gap-3 overflow-x-auto md:overflow-y-auto flex-1 max-h-[760px] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-0.5">
-                  {images.map((img, idx) => (
+                  {mediaItems.map((item, idx) => (
                     <button
                       key={idx}
                       ref={(el) => {
@@ -165,25 +193,50 @@ export default function ProductDetailClient({
                           : "border-2 border-transparent"
                       }`}
                     >
-                      <Image
-                        src={img}
-                        alt={`${product.title} thumb ${idx + 1}`}
-                        fill
-                        sizes="80px"
-                        className="object-cover object-center"
-                        unoptimized
-                      />
+                      {item.type === "image" ? (
+                        <Image
+                          src={item.src}
+                          alt={`${product.title} thumb ${idx + 1}`}
+                          fill
+                          sizes="80px"
+                          className="object-cover object-center"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="relative w-full h-full bg-[#111111] flex items-center justify-center overflow-hidden">
+                          {item.poster && (
+                            <Image
+                              src={item.poster}
+                              alt={`${product.title} video thumb`}
+                              fill
+                              sizes="80px"
+                              className="object-cover object-center opacity-60"
+                              unoptimized
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-1">
+                            <div className="w-6 h-6 rounded-full bg-white/95 text-black flex items-center justify-center shadow-md">
+                              <svg className="w-3 h-3 fill-current translate-x-0.5" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                            <span className="text-[8px] uppercase tracking-wider font-bold text-white mt-1 drop-shadow">
+                              Video
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
 
                 {/* Scroll Down Arrow */}
-                {activeImageIndex < images.length - 1 ? (
+                {activeImageIndex < mediaItems.length - 1 ? (
                   <button
                     type="button"
                     onClick={() =>
                       setActiveImageIndex((prev) =>
-                        Math.min(images.length - 1, prev + 1)
+                        Math.min(mediaItems.length - 1, prev + 1)
                       )
                     }
                     className="hidden md:flex w-full items-center justify-center py-1.5 text-[#333333] hover:text-black cursor-pointer transition-colors shrink-0"
@@ -199,24 +252,48 @@ export default function ProductDetailClient({
               </div>
             )}
 
-            {/* Large Active Main Image with Horizontal Right-to-Left Sliding Transition */}
+            {/* Large Active Main Image/Video with Horizontal Right-to-Left Sliding Transition */}
             <div className="relative flex-1 bg-[#f9f9f9] overflow-hidden aspect-[2/3] max-h-[820px] border border-[#f0f0f0]">
               {/* Horizontal Sliding Track */}
               <div
                 className="flex w-full h-full transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
               >
-                {images.map((img, idx) => (
+                {mediaItems.map((item, idx) => (
                   <div key={idx} className="relative w-full h-full shrink-0">
-                    <Image
-                      src={img}
-                      alt={`${product.title} image ${idx + 1}`}
-                      fill
-                      priority={idx === 0}
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                      className="object-cover object-center"
-                      unoptimized
-                    />
+                    {item.type === "image" ? (
+                      <Image
+                        src={item.src}
+                        alt={`${product.title} image ${idx + 1}`}
+                        fill
+                        priority={idx === 0}
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        className="object-cover object-center"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="relative w-full h-full bg-black flex items-center justify-center">
+                        {extractYouTubeId(item.src) ? (
+                          <iframe
+                            src={`https://www.youtube.com/embed/${extractYouTubeId(item.src)}?autoplay=0&controls=1&rel=0&playsinline=1`}
+                            className="w-full h-full border-0"
+                            allow="autoplay; encrypted-media; picture-in-picture"
+                            allowFullScreen
+                            title={`${product.title} video`}
+                          />
+                        ) : (
+                          <video
+                            src={item.src}
+                            controls
+                            playsInline
+                            loop
+                            preload="metadata"
+                            poster={item.poster}
+                            className="w-full h-full object-contain bg-black"
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

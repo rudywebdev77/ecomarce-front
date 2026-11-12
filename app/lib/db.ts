@@ -70,8 +70,9 @@ async function resolveMongoSrvToDirectUri(uri: string): Promise<string> {
   }
 
   try {
+    const resolver = new dns.promises.Resolver();
     try {
-      dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
+      resolver.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
     } catch {}
 
     const raw = uri.replace(/^mongodb\+srv:\/\//, "http://");
@@ -83,7 +84,7 @@ async function resolveMongoSrvToDirectUri(uri: string): Promise<string> {
     const pathname = parsed.pathname || "/sillhouete_db";
     const searchParams = new URLSearchParams(parsed.search);
 
-    const srvRecords = await dns.promises.resolveSrv(`_mongodb._tcp.${host}`);
+    const srvRecords = await resolver.resolveSrv(`_mongodb._tcp.${host}`);
     if (!srvRecords || srvRecords.length === 0) {
       return uri;
     }
@@ -91,7 +92,7 @@ async function resolveMongoSrvToDirectUri(uri: string): Promise<string> {
     const hostList = srvRecords.map((r) => `${r.name}:${r.port}`).join(",");
 
     try {
-      const txtRecords = await dns.promises.resolveTxt(host);
+      const txtRecords = await resolver.resolveTxt(host);
       if (txtRecords && txtRecords.length > 0) {
         const txtParams = txtRecords.map((t) => t.join("")).join("&");
         const txtSearchParams = new URLSearchParams(txtParams);

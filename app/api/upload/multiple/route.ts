@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     for (const file of files) {
       if (file && typeof file.arrayBuffer === "function") {
         const buffer = Buffer.from(await file.arrayBuffer());
-        const saved = saveBufferToUploads(buffer, file.name);
+        const saved = await saveBufferToUploads(buffer, file.name, file.type);
         urls.push(saved.url);
       }
     }

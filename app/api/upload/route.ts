@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       for (const f of files) {
         if (f && typeof f.arrayBuffer === "function") {
           const buffer = Buffer.from(await f.arrayBuffer());
-          const saved = saveBufferToUploads(buffer, f.name);
+          const saved = await saveBufferToUploads(buffer, f.name, f.type);
           urls.push(saved.url);
         }
       }
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     if (file && typeof file.arrayBuffer === "function") {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const saved = saveBufferToUploads(buffer, file.name);
+      const saved = await saveBufferToUploads(buffer, file.name, file.type);
       return NextResponse.json({
         success: true,
         url: saved.url,

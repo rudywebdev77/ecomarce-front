@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const ext = matches[1].split("/")[1] || "jpg";
     const buffer = Buffer.from(matches[2], "base64");
-    const saved = saveBufferToUploads(buffer, `image.${ext}`);
+    const saved = await saveBufferToUploads(buffer, `image.${ext}`, matches[1]);
 
     return NextResponse.json({
       success: true,

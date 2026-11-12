@@ -9,7 +9,14 @@ interface FloatingProductVideoProps {
   videoUrl?: string;
 }
 
-function extractYouTubeId(urlOrId?: string): string | null {
+export function normalizeMediaUrl(url?: string): string {
+  if (!url) return "";
+  return url
+    .trim()
+    .replace(/^https?:\/\/(?:localhost|127\.0\.0\.1):5000(\/uploads\/)/i, "$1");
+}
+
+export function extractYouTubeId(urlOrId?: string): string | null {
   if (!urlOrId) return null;
   const str = urlOrId.trim();
   if (/^[a-zA-Z0-9_-]{11}$/.test(str)) return str;
@@ -28,8 +35,10 @@ export default function FloatingProductVideo({
   // Look up video for this product handle (case-insensitive) or explicit videoUrl
   const normalizedHandle = productHandle.toLowerCase().trim();
   const videos = productVideosMap as Record<string, string>;
-  const explicitVideoId = extractYouTubeId(videoUrl);
-  const videoId = explicitVideoId || videos[normalizedHandle] || null;
+  const trimmedUrl = normalizeMediaUrl(videoUrl);
+  const explicitYouTubeId = extractYouTubeId(trimmedUrl);
+  const youTubeId = explicitYouTubeId || (!trimmedUrl ? videos[normalizedHandle] || null : null);
+  const directVideoSrc = !explicitYouTubeId && trimmedUrl ? trimmedUrl : null;
 
   // Close modal on Escape key
   useEffect(() => {
@@ -43,7 +52,7 @@ export default function FloatingProductVideo({
   }, [isModalOpen]);
 
   // If this product doesn't have a video or the user dismissed it, don't show
-  if (!videoId || isDismissed) {
+  if ((!youTubeId && !directVideoSrc) || isDismissed) {
     return null;
   }
 
@@ -60,13 +69,24 @@ export default function FloatingProductVideo({
           title="Click to play full video"
         >
           {/* Muted Autoplay Video Preview */}
-          <iframe
-            className="absolute inset-0 w-full h-full pointer-events-none scale-[1.05]"
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${videoId}&disablekb=1`}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            tabIndex={-1}
-            title={productTitle}
-          />
+          {youTubeId ? (
+            <iframe
+              className="absolute inset-0 w-full h-full pointer-events-none scale-[1.05]"
+              src={`https://www.youtube.com/embed/${youTubeId}?autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${youTubeId}&disablekb=1`}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              tabIndex={-1}
+              title={productTitle}
+            />
+          ) : (
+            <video
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+              src={directVideoSrc!}
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          )}
 
           {/* Top Overlay Header */}
           <div className="absolute top-0 inset-x-0 pt-2 pb-5 px-2 bg-gradient-to-b from-black/80 via-black/30 to-transparent flex items-center justify-between z-10 pointer-events-none">
@@ -141,13 +161,23 @@ export default function FloatingProductVideo({
             </button>
 
             {/* Video Player With Sound & Full Controls */}
-            <iframe
-              className="w-full h-full border-0"
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${videoId}`}
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              title={productTitle}
-            />
+            {youTubeId ? (
+              <iframe
+                className="w-full h-full border-0"
+                src={`https://www.youtube.com/embed/${youTubeId}?autoplay=1&mute=0&controls=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${youTubeId}`}
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+                title={productTitle}
+              />
+            ) : (
+              <video
+                className="w-full h-full object-contain bg-black"
+                src={directVideoSrc!}
+                autoPlay
+                controls
+                playsInline
+              />
+            )}
           </div>
         </div>
       )}

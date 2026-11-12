@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const saved = saveBufferToUploads(buffer, file.name);
+    const saved = await saveBufferToUploads(buffer, file.name, file.type);
 
     return NextResponse.json({
       success: true,
