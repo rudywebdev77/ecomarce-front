@@ -6,6 +6,19 @@ import { API_BASE } from "../lib/api";
 
 type Tab = "dashboard" | "products" | "categories" | "orders" | "invoices" | "customers" | "inquiries" | "blogs" | "settings" | "profile";
 
+const VALID_TABS: Tab[] = [
+  "dashboard",
+  "products",
+  "categories",
+  "orders",
+  "invoices",
+  "customers",
+  "inquiries",
+  "blogs",
+  "settings",
+  "profile",
+];
+
 const DEFAULT_FALLBACK_IMAGE =
   "https://cdn.shopify.com/s/files/1/0709/7755/2627/files/sillhouete-formal-livia-butter-yellow-intricate-embroidery.jpg?v=1776742288";
 
@@ -72,7 +85,19 @@ export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [tabReady, setTabReady] = useState(false);
+  const [tabLoading, setTabLoading] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const selectTab = (tab: Tab) => {
+    setActiveTab(tab);
+    try {
+      localStorage.setItem("sillhouete_admin_tab", tab);
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.replaceState(null, "", url.toString());
+    } catch {}
+  };
   const [loading, setLoading] = useState(true);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -378,8 +403,26 @@ export default function AdminPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Check existing token & verify authenticity against backend
+  // Check existing token, restore active tab, & verify authenticity against backend
   useEffect(() => {
+    try {
+      const urlTab = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+      const savedTab = localStorage.getItem("sillhouete_admin_tab") as Tab | null;
+      const targetTab =
+        urlTab && VALID_TABS.includes(urlTab)
+          ? urlTab
+          : savedTab && VALID_TABS.includes(savedTab)
+          ? savedTab
+          : "dashboard";
+      setActiveTab(targetTab);
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("tab") !== targetTab) {
+        url.searchParams.set("tab", targetTab);
+        window.history.replaceState(null, "", url.toString());
+      }
+    } catch {}
+    setTabReady(true);
+
     const savedToken = localStorage.getItem("sillhouete_admin_token");
     const savedUser = localStorage.getItem("sillhouete_admin_user");
     if (savedToken) {
@@ -442,6 +485,7 @@ export default function AdminPage() {
   const fetchDashboardData = async () => {
     if (!token) return;
     const authHeaders = { Authorization: `Bearer ${token}` };
+    setTabLoading(true);
 
     try {
       if (activeTab === "dashboard") {
@@ -451,14 +495,16 @@ export default function AdminPage() {
           setStats(data);
         }
       } else if (activeTab === "products") {
-        const res = await fetch(`${API_BASE}/products?limit=500`);
+        const [res] = await Promise.all([
+          fetch(`${API_BASE}/products?limit=500`),
+          fetchCategories(),
+        ]);
         if (res.ok) {
           const data = await res.json();
           setProducts(data.products || []);
         }
-        fetchCategories();
       } else if (activeTab === "categories") {
-        fetchCategories();
+        await fetchCategories();
       } else if (activeTab === "orders" || activeTab === "invoices") {
         const res = await fetch(`${API_BASE}/orders?limit=100`, { headers: authHeaders });
         if (res.ok) {
@@ -492,16 +538,18 @@ export default function AdminPage() {
       }
     } catch (err) {
       console.error("Failed fetching admin data:", err);
+    } finally {
+      setTabLoading(false);
     }
   };
 
   // Fetch data when authenticated or active tab changes
   useEffect(() => {
-    if (token) {
+    if (token && tabReady) {
       fetchDashboardData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, activeTab]);
+  }, [token, activeTab, tabReady]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1226,7 +1274,7 @@ export default function AdminPage() {
                   <button
                     key={item.id}
                     onClick={() => {
-                      setActiveTab(item.id as Tab);
+                      selectTab(item.id as Tab);
                       setIsMobileSidebarOpen(false);
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xs transition-all cursor-pointer ${isActive
@@ -1305,7 +1353,7 @@ export default function AdminPage() {
                   <button
                     key={item.id}
                     onClick={() => {
-                      setActiveTab(item.id as Tab);
+                      selectTab(item.id as Tab);
                       setIsMobileSidebarOpen(false);
                     }}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 text-[13px] font-medium rounded-xs transition-all cursor-pointer ${isActive
@@ -1355,10 +1403,16 @@ export default function AdminPage() {
               </svg>
             </button>
 
-            <div>
+            <div className="flex items-center gap-3">
               <h1 className="text-[16px] font-bold text-[#111827] font-serif tracking-wide">
                 Admin Dashboard
               </h1>
+              {tabLoading && (
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#0e3359] bg-[#eef2ff] px-2.5 py-0.5 rounded-full border border-[#c7d2fe]">
+                  <span className="w-2 h-2 rounded-full bg-[#0e3359] animate-pulse" />
+                  Loading...
+                </span>
+              )}
             </div>
           </div>
 
@@ -1395,7 +1449,7 @@ export default function AdminPage() {
                   <button
                     onClick={() => {
                       setIsUserMenuOpen(false);
-                      setActiveTab("profile");
+                      selectTab("profile");
                     }}
                     className="w-full flex items-center justify-between px-2.5 py-2 text-[12px] font-medium text-[#111827] hover:bg-[#f3f4f6] rounded-xs transition-colors cursor-pointer text-left"
                   >
@@ -1519,7 +1573,7 @@ export default function AdminPage() {
                     Recent Orders
                   </h3>
                   <button
-                    onClick={() => setActiveTab("orders")}
+                    onClick={() => selectTab("orders")}
                     className="text-[12px] text-[#666666] hover:text-black font-semibold uppercase tracking-wider"
                   >
                     View All Orders →
@@ -2883,7 +2937,7 @@ export default function AdminPage() {
                                   type="button"
                                   onClick={() => {
                                     setProductCategory(cat.name);
-                                    setActiveTab("products");
+                                    selectTab("products");
                                   }}
                                   className="px-2.5 py-1 bg-[#0e3359]/10 text-[#0e3359] hover:bg-[#0e3359] hover:text-white rounded-full text-[11px] font-bold transition-colors cursor-pointer"
                                   title="Click to view outfits in this category"

@@ -51,48 +51,66 @@ async function ensureDefaultCategories() {
   }
 }
 
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // GET /api/categories
 export async function GET() {
   try {
     await connectDB();
-    await ensureDefaultCategories();
 
-    const categories = await Category.find().sort({ display_order: 1, created_at: 1 }).lean();
+    const existingCount = await Category.estimatedDocumentCount();
+    if (existingCount === 0) {
+      await ensureDefaultCategories();
+    }
 
-    const categoriesWithCount = await Promise.all(
-      categories.map(async (c: any) => {
-        const subCats = categories.filter((sub: any) => sub.parent_id === c.id);
-        const namesToMatch = [c.name, ...subCats.map((s: any) => s.name)];
+    const [categories, allProducts] = await Promise.all([
+      Category.find().sort({ display_order: 1, created_at: 1 }).lean(),
+      Product.find({}, { category: 1, product_type: 1, tags: 1 }).lean(),
+    ]);
 
-        const distinctWord = c.name
-          .replace(/['’]2[0-9]/g, "")
-          .replace(/(Luxury|Pret|Formals|Formal|Birdal|Bridal|Dresses|Collection|Solids|Solid|Eid|II)/gi, "")
-          .trim();
+    const categoriesWithCount = categories.map((c: any) => {
+      const subCats = categories.filter((sub: any) => sub.parent_id === c.id);
+      const namesToMatch = [c.name, ...subCats.map((s: any) => s.name)];
 
-        const conditions: any[] = [
-          { category: { $in: namesToMatch.map((n) => new RegExp(`^${n.trim()}$`, "i")) } },
-          { product_type: { $in: namesToMatch.map((n) => new RegExp(`^${n.trim()}$`, "i")) } },
-          { tags: { $in: namesToMatch.map((n) => new RegExp(`^${n.trim()}$`, "i")) } },
-        ];
+      const distinctWord = c.name
+        .replace(/['’]2[0-9]/g, "")
+        .replace(/(Luxury|Pret|Formals|Formal|Birdal|Bridal|Dresses|Collection|Solids|Solid|Eid|II)/gi, "")
+        .trim();
 
-        if (distinctWord.length >= 3) {
-          const wordRegex = new RegExp(distinctWord, "i");
-          conditions.push({ category: wordRegex });
-          conditions.push({ tags: wordRegex });
+      const exactRegexes = namesToMatch.map(
+        (n) => new RegExp(`^${escapeRegExp(n.trim())}$`, "i")
+      );
+      const wordRegex =
+        distinctWord.length >= 3 ? new RegExp(escapeRegExp(distinctWord), "i") : null;
+
+      let product_count = 0;
+      for (const p of allProducts) {
+        const pCat = String(p.category || "");
+        const pType = String(p.product_type || "");
+        const pTags = Array.isArray(p.tags) ? p.tags.map((t: any) => String(t || "")) : [];
+
+        const matchesExact =
+          exactRegexes.some((rx) => rx.test(pCat) || rx.test(pType)) ||
+          pTags.some((tag: string) => exactRegexes.some((rx) => rx.test(tag)));
+
+        const matchesWord =
+          wordRegex !== null &&
+          (wordRegex.test(pCat) || pTags.some((tag: string) => wordRegex.test(tag)));
+
+        if (matchesExact || matchesWord) {
+          product_count++;
         }
+      }
 
-        const product_count = await Product.countDocuments({
-          $or: conditions,
-        });
-
-        return {
-          ...c,
-          product_count,
-          has_subcategories: subCats.length > 0,
-          subcategories_count: subCats.length,
-        };
-      })
-    );
+      return {
+        ...c,
+        product_count,
+        has_subcategories: subCats.length > 0,
+        subcategories_count: subCats.length,
+      };
+    });
 
     return NextResponse.json({
       categories: categoriesWithCount,
