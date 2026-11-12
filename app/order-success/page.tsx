@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Header from "../components/Header";
@@ -11,9 +11,28 @@ import { API_BASE } from "../lib/api";
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "SIL-1004";
-  const email = searchParams.get("email") || "your email address";
+  const paramEmail = searchParams.get("email") || "";
+  const sessionId = searchParams.get("session_id") || "";
+  const [resolvedEmail, setResolvedEmail] = useState(paramEmail || "your email address");
+  const email = resolvedEmail;
   const total = searchParams.get("total") || "";
   const method = searchParams.get("method") || "stripe";
+
+  useEffect(() => {
+    if (!sessionId) return;
+    fetch(`${API_BASE}/payments/sync-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, orderId }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.email && !paramEmail) {
+          setResolvedEmail(data.email);
+        }
+      })
+      .catch(() => {});
+  }, [sessionId, orderId, paramEmail]);
 
   const [isCancelled, setIsCancelled] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);

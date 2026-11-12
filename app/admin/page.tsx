@@ -2705,15 +2705,6 @@ export default function AdminPage() {
                   <div className="flex items-center gap-3 shrink-0">
                     <button
                       type="button"
-                      disabled={resettingCategories}
-                      onClick={handleResetAllCategories}
-                      className="bg-white border border-[#cbd5e1] hover:border-[#0e3359] text-[#334155] hover:text-[#0e3359] px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider transition-colors rounded-md cursor-pointer flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap shadow-2xs"
-                      title="Restore and synchronize all 34 couture collections and subcategories"
-                    >
-                      <span>{resettingCategories ? "Syncing..." : "⚡ Sync All 34 Collections"}</span>
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
                         setEditingCategory(null);
                         setCatForm({

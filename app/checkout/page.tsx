@@ -80,6 +80,27 @@ export default function CheckoutPage() {
     if (typeof window !== "undefined") {
       try {
         sessionStorage.clear();
+        const savedUserStr = localStorage.getItem("sillhouete_cust_user");
+        if (savedUserStr) {
+          const savedUser = JSON.parse(savedUserStr);
+          if (savedUser?.email) setEmail((prev) => prev || savedUser.email);
+          if (savedUser?.first_name) setFirstName((prev) => prev || savedUser.first_name);
+          if (savedUser?.last_name) setLastName((prev) => prev || savedUser.last_name);
+          if (savedUser?.phone) setPhone((prev) => prev || savedUser.phone);
+          if (savedUser?.address) setAddress((prev) => prev || savedUser.address);
+          if (savedUser?.city) setCity((prev) => prev || savedUser.city);
+          if (savedUser?.country) setCountry(savedUser.country);
+          customerRef.current = {
+            ...customerRef.current,
+            email: customerRef.current.email || savedUser?.email || "",
+            first_name: customerRef.current.first_name || savedUser?.first_name || "",
+            last_name: customerRef.current.last_name || savedUser?.last_name || "",
+            phone: customerRef.current.phone || savedUser?.phone || "",
+            address: customerRef.current.address || savedUser?.address || "",
+            city: customerRef.current.city || savedUser?.city || "",
+            country: savedUser?.country || customerRef.current.country || "Pakistan",
+          };
+        }
       } catch {}
     }
     if (typeof window !== "undefined" && (window as any).Stripe) {
@@ -293,6 +314,7 @@ export default function CheckoutPage() {
                   fetch(`${API_BASE}/payments/update-session-customer`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    keepalive: true,
                     body: JSON.stringify({
                       sessionId: sessionIdRef.current,
                       customer: customerRef.current,
