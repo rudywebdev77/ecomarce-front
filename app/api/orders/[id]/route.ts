@@ -45,13 +45,13 @@ export async function PATCH(req: NextRequest, { params }: RouteProps) {
     if (payment_status) updates.payment_status = payment_status;
     if (tracking_number !== undefined) updates.tracking_number = tracking_number;
 
+    const num = parseInt(id, 10);
+    const conditions: any[] = [{ id }];
+    if (!isNaN(num)) conditions.push({ order_number: num });
+    if (/^[0-9a-fA-F]{24}$/.test(id)) conditions.push({ _id: id });
+
     const updated = await Order.findOneAndUpdate(
-      {
-        $or: [
-          { id },
-          { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-        ],
-      },
+      { $or: conditions },
       { $set: updates },
       { new: true }
     );
