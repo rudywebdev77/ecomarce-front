@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import AnnouncementBar from "../components/AnnouncementBar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -27,6 +27,7 @@ function parsePriceToNumber(val: any): number {
 }
 
 function AccountContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlEmail = searchParams.get("email") || "";
   const urlOrderId = searchParams.get("orderId") || "";
@@ -417,6 +418,12 @@ function AccountContent() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.isShipped && data.redirectTo) {
+          setShowCancelModal(false);
+          alert(data.error);
+          router.push(data.redirectTo);
+          return;
+        }
         throw new Error(data.error || "Failed to cancel order.");
       }
       setShowCancelModal(false);
@@ -1309,7 +1316,23 @@ function AccountContent() {
                 {!currentStage?.isCancelled && activeOrder.order_status !== "delivered" && (
                   <button
                     type="button"
-                    onClick={() => setShowCancelModal(true)}
+                    onClick={() => {
+                      const statusLower = (activeOrder.order_status || "").toLowerCase();
+                      const isShipped =
+                        ["shipped", "dispatched", "in_transit"].includes(statusLower) ||
+                        (currentStage?.stage ?? 1) >= 4;
+
+                      if (isShipped) {
+                        alert(
+                          `Order ${activeOrder.id} has already been dispatched/shipped and cannot be cancelled automatically. Redirecting you to Customer Support...`
+                        );
+                        router.push(
+                          `/pages/contact-us?orderId=${encodeURIComponent(activeOrder.id)}&reason=cancellation`
+                        );
+                      } else {
+                        setShowCancelModal(true);
+                      }
+                    }}
                     style={{ color: "#d92d20", borderColor: "#fecdd3", backgroundColor: "#fff1f2" }}
                     className="px-4 py-2 border text-[11px] font-bold uppercase tracking-wider rounded transition-colors hover:bg-rose-100 cursor-pointer"
                   >

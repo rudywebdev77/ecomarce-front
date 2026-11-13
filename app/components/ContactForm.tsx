@@ -1,9 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { API_BASE } from "../lib/api";
 
 export default function ContactForm() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
+  const reason = searchParams.get("reason");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -11,6 +16,18 @@ export default function ContactForm() {
     subject: "Customer Inquiry",
     message: "",
   });
+
+  useEffect(() => {
+    if (orderId) {
+      setFormData((prev) => ({
+        ...prev,
+        subject: `Cancellation Request for Order ${orderId}`,
+        message:
+          prev.message ||
+          `Hello Sillhouete Customer Care, I would like to request cancellation for order ${orderId} which has been dispatched.`,
+      }));
+    }
+  }, [orderId]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -66,6 +83,16 @@ export default function ContactForm() {
       {status === "error" && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-[13px] font-sans-custom">
           {errorMessage}
+        </div>
+      )}
+
+      {orderId && (
+        <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 text-amber-900 text-[12px] leading-relaxed">
+          <p className="font-bold text-[12.5px] mb-1">📦 Order #{orderId} - Cancellation Notice</p>
+          <p>
+            This order has already been dispatched/shipped and cannot be automatically cancelled online.
+            Please submit your message below so our atelier customer support team can assist you directly with return, courier re-routing, or refund.
+          </p>
         </div>
       )}
 

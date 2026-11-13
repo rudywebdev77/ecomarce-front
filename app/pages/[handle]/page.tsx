@@ -69,7 +69,9 @@ const PAGES_CONTENT: Record<
             </div>
           </div>
 
-          <ContactForm />
+          <Suspense fallback={<div className="p-8 text-center text-[#777]">Loading contact form...</div>}>
+            <ContactForm />
+          </Suspense>
         </div>
       </div>
     ),

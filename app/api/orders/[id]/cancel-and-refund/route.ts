@@ -32,6 +32,19 @@ export async function POST(req: NextRequest, { params }: RouteProps) {
       });
     }
 
+    // Orders that are already shipped, dispatched, or delivered cannot be cancelled directly
+    const shippedStatuses = ["shipped", "dispatched", "in_transit", "delivered"];
+    if (shippedStatuses.includes((order.order_status || "").toLowerCase())) {
+      return NextResponse.json(
+        {
+          error: `Order ${order.id} has already been dispatched/shipped and cannot be cancelled automatically. Please contact customer care.`,
+          isShipped: true,
+          redirectTo: `/pages/contact-us?orderId=${encodeURIComponent(order.id)}&reason=cancellation`,
+        },
+        { status: 400 }
+      );
+    }
+
     let refundMessage = "";
 
     // Process Stripe refund if paid via Stripe
