@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB, Contact } from "@/app/lib/db";
 import { verifyAdmin } from "@/app/lib/auth";
+import { sendContactInquiryNotification } from "@/app/lib/email";
 
 // GET /api/contact (Admin)
 export async function GET(req: NextRequest) {
@@ -63,6 +64,19 @@ export async function POST(req: NextRequest) {
       reply: "",
       replied_at: null,
     });
+
+    // Send real-time email notification to store owner (malikhasnain32897@gmail.com)
+    try {
+      await sendContactInquiryNotification({
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        phone: phone ? String(phone).trim() : "",
+        subject: subject ? String(subject).trim() : "General Store Inquiry",
+        message: message.trim(),
+      });
+    } catch (mailErr: any) {
+      console.error("[CONTACT NOTIFICATION FAILED]", mailErr.message);
+    }
 
     return NextResponse.json(
       {

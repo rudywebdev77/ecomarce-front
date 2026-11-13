@@ -105,7 +105,7 @@ const CONTACT_INFO = {
     address: "18w100 22nd St, Ste 124, Oakbrook Terrace, IL, Zip Code 60181",
     phone: "+1 217 2909383",
   },
-  email: "info@sillhouete.com",
+  email: "malikhasnain32897@gmail.com",
 };
 
 /* ---------- Header Typography ---------- */

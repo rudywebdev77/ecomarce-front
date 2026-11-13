@@ -1008,8 +1008,9 @@ export default function AdminPage() {
       if (!res.ok) throw new Error("Failed to reply");
       const data = await res.json();
       setInquiries(inquiries.map((m) => (m.id === inquiryId ? data.inquiry : m)));
-      setActiveInquiry(null);
+      setActiveInquiry(data.inquiry || null);
       setReplyText("");
+      alert("✓ Reply saved and email sent to customer successfully!");
     } catch (err: any) {
       alert(err.message);
     }
@@ -3790,6 +3791,24 @@ export default function AdminPage() {
                           {activeInquiry.phone && (
                             <p className="text-[12px] text-[#555555]">Phone: {activeInquiry.phone}</p>
                           )}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <a
+                              href={`mailto:${activeInquiry.email}?subject=${encodeURIComponent("Re: " + (activeInquiry.subject || "Your Inquiry with Sillhouete"))}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#f0f4f8] hover:bg-[#e1e9f2] text-[#0e3359] text-[11px] font-semibold rounded-sm border border-[#c8d8ea] transition-colors"
+                            >
+                              ✉ Open in Email App
+                            </a>
+                            {activeInquiry.phone && (
+                              <a
+                                href={`https://wa.me/${activeInquiry.phone.replace(/[^0-9]/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#eafaf1] hover:bg-[#d4f4e2] text-[#1e7e34] text-[11px] font-semibold rounded-sm border border-[#b2e2c8] transition-colors"
+                              >
+                                💬 Chat on WhatsApp
+                              </a>
+                            )}
+                          </div>
                         </div>
                         <span className="text-[11px] text-[#999999]">
                           {new Date(activeInquiry.created_at).toLocaleString()}
@@ -3818,14 +3837,14 @@ export default function AdminPage() {
                           rows={4}
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
-                          placeholder="Write reply to send to customer care record..."
+                          placeholder="Write reply to send directly to customer's email..."
                           className="w-full px-3.5 py-2.5 border border-[#d6d6d6] focus:border-black outline-none text-[13px] resize-none mb-3"
                         />
                         <button
                           onClick={() => handleReplyInquiry(activeInquiry.id)}
-                          className="bg-[#0e3359] text-white px-6 py-2.5 text-[12px] font-bold uppercase tracking-wider hover:bg-[#0a2542] transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
+                          className="bg-[#0e3359] text-white px-6 py-2.5 text-[12px] font-bold uppercase tracking-wider hover:bg-[#0a2542] transition-colors cursor-pointer disabled:opacity-50 shadow-xs flex items-center gap-2"
                         >
-                          Submit Reply
+                          ✉ Send Reply to Customer
                         </button>
                       </div>
                     </div>

@@ -46,7 +46,13 @@ const PAGES_CONTENT: Record<
               <strong>WhatsApp:</strong> {siteData.storeInfo.whatsapp}
             </p>
             <p className="text-[14px] text-[#555555]">
-              <strong>Email:</strong> {siteData.storeInfo.email}
+              <strong>Email:</strong>{" "}
+              <a
+                href={`mailto:${siteData.storeInfo.email}`}
+                className="text-[#111111] hover:underline"
+              >
+                {siteData.storeInfo.email}
+              </a>
             </p>
             <p className="text-[14px] text-[#555555]">
               <strong>Office:</strong> DHA Phase 5, Lahore, Pakistan

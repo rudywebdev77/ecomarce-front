@@ -18,7 +18,7 @@ export async function GET() {
           "COMPLIMENTARY WORLDWIDE SHIPPING ON QUALIFYING ORDERS • BESPOKE BRIDAL COUTURE AVAILABLE",
         phone: "+92 331 0397865",
         whatsapp: "+92 331 0397865",
-        email: "info@sillhouete.com",
+        email: "malikhasnain32897@gmail.com",
         office_address_pk: "327-B, Street 7, Lane 15, Cavalry Ground, Lahore",
         studio_address_pk: "Sillhouete, Almas Tower, MM Alam Rd, Block T, Gulberg 2, Lahore",
         office_address_usa:

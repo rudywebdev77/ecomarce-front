@@ -44,7 +44,7 @@ const SettingSchema = new Schema<ISetting>(
     },
     phone: { type: String, default: "+92 331 0397865" },
     whatsapp: { type: String, default: "+92 331 0397865" },
-    email: { type: String, default: "info@sillhouete.com" },
+    email: { type: String, default: "malikhasnain32897@gmail.com" },
     office_address_pk: { type: String, default: "327-B, Street 7, Lane 15, Cavalry Ground, Lahore" },
     studio_address_pk: { type: String, default: "Sillhouete, Almas Tower, MM Alam Rd, Block T, Gulberg 2, Lahore" },
     office_address_usa: {

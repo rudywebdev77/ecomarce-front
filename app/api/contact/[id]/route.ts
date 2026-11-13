@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB, Contact } from "@/app/lib/db";
 import { verifyAdmin } from "@/app/lib/auth";
+import { sendContactReplyEmail } from "@/app/lib/email";
 
 // PATCH / PUT /api/contact/[id] (Admin reply or status update)
 async function updateContact(
@@ -37,8 +38,23 @@ async function updateContact(
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
+    // If an admin reply was provided, send real-time reply email to customer
+    if (reply !== undefined && String(reply).trim() && updated.email) {
+      try {
+        await sendContactReplyEmail({
+          toEmail: updated.email,
+          customerName: updated.name || "Customer",
+          replyMessage: String(reply).trim(),
+          originalMessage: updated.message,
+          subject: updated.subject,
+        });
+      } catch (mailErr: any) {
+        console.error("[CUSTOMER REPLY EMAIL FAILED]", mailErr.message);
+      }
+    }
+
     return NextResponse.json({
-      message: "Message updated successfully in MongoDB",
+      message: "Message updated and reply sent successfully",
       inquiry: updated,
     });
   } catch (err: any) {
