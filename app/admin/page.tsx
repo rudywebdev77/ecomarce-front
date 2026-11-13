@@ -1089,7 +1089,12 @@ export default function AdminPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center font-serif text-[16px]">Loading Sillhouete Admin...</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center font-serif bg-[#fbfbfb]">
+        <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-[14px] uppercase tracking-[0.2em] text-[#555555]">Sillhouete Studio</p>
+      </div>
+    );
   }
 
   // =========================================================

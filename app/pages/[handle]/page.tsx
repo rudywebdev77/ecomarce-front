@@ -11,6 +11,7 @@ import CurrencySwitcher from "../../components/CurrencySwitcher";
 import WhatsAppButton from "../../components/WhatsAppButton";
 import ContactForm from "../../components/ContactForm";
 import siteData from "../../site_data.json";
+import { GenericPageSkeleton } from "../../components/SkeletonLoaders";
 
 interface PageProps {
   params: Promise<{ handle: string }>;
@@ -69,7 +70,17 @@ const PAGES_CONTENT: Record<
             </div>
           </div>
 
-          <Suspense fallback={<div className="p-8 text-center text-[#777]">Loading contact form...</div>}>
+          <Suspense
+            fallback={
+              <div className="bg-[#fcfcfc] border border-[#f0f0f0] p-6 space-y-4">
+                <div className="h-4 w-32 skeleton-shimmer rounded-xs" />
+                <div className="h-10 w-full skeleton-shimmer rounded-xs" />
+                <div className="h-10 w-full skeleton-shimmer rounded-xs" />
+                <div className="h-24 w-full skeleton-shimmer rounded-xs" />
+                <div className="h-10 w-28 skeleton-shimmer rounded-xs" />
+              </div>
+            }
+          >
             <ContactForm />
           </Suspense>
         </div>
@@ -274,13 +285,7 @@ export default function GenericPage({ params }: PageProps) {
       <Header />
 
       <main className="flex-1">
-        <Suspense
-          fallback={
-            <div className="py-24 text-center font-serif text-[#777777]">
-              Loading page...
-            </div>
-          }
-        >
+        <Suspense fallback={<GenericPageSkeleton />}>
           <GenericPageContent params={params} />
         </Suspense>
       </main>

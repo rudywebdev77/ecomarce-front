@@ -9,6 +9,7 @@ import SearchModal from "../components/SearchModal";
 import CurrencySwitcher from "../components/CurrencySwitcher";
 import WhatsAppButton from "../components/WhatsAppButton";
 import SearchPageClient from "./SearchPageClient";
+import { SearchSkeleton } from "../components/SkeletonLoaders";
 
 export const metadata: Metadata = {
   title: "Search – Sillhouete",
@@ -22,13 +23,7 @@ export default function SearchPage() {
       <Header />
 
       <main className="flex-1">
-        <Suspense
-          fallback={
-            <div className="py-24 text-center font-serif text-[#666666]">
-              Loading search...
-            </div>
-          }
-        >
+        <Suspense fallback={<SearchSkeleton />}>
           <SearchPageClient />
         </Suspense>
       </main>

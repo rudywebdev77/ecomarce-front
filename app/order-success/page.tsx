@@ -7,6 +7,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import siteData from "../site_data.json";
 import { API_BASE } from "../lib/api";
+import { OrderSuccessSkeleton } from "../components/SkeletonLoaders";
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
@@ -284,7 +285,7 @@ export default function OrderSuccessPage() {
     <div className="min-h-screen bg-white flex flex-col font-serif text-[#111111]">
       <Header />
       <main className="flex-1">
-        <Suspense fallback={<div className="p-12 text-center">Loading order confirmation...</div>}>
+        <Suspense fallback={<OrderSuccessSkeleton />}>
           <OrderSuccessContent />
         </Suspense>
       </main>

@@ -13,6 +13,7 @@ import SearchModal from "../components/SearchModal";
 import CurrencySwitcher from "../components/CurrencySwitcher";
 import WhatsAppButton from "../components/WhatsAppButton";
 import { API_BASE } from "../lib/api";
+import { AccountSkeleton } from "../components/SkeletonLoaders";
 
 function parsePriceToNumber(val: any): number {
   if (typeof val === "number") return isNaN(val) ? 0 : val;
@@ -510,12 +511,7 @@ function AccountContent() {
       ];
 
   if (loadingAuth) {
-    return (
-      <div className="py-24 text-center font-serif text-[#111111]">
-        <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-[14px] text-[#666666] font-sans-custom">Loading Customer Dashboard...</p>
-      </div>
-    );
+    return <AccountSkeleton />;
   }
 
   // ========================================================
@@ -1559,7 +1555,7 @@ export default function AccountPage() {
       <Header />
 
       <main className="flex-1 bg-[#fafafa]">
-        <Suspense fallback={<div className="p-12 text-center">Loading customer dashboard...</div>}>
+        <Suspense fallback={<AccountSkeleton />}>
           <AccountContent />
         </Suspense>
       </main>

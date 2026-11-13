@@ -14,6 +14,7 @@ import { getCollectionData, COLLECTIONS_REGISTRY } from "../../lib/collections";
 import { API_BASE } from "../../lib/api";
 import { Product } from "../../components/ProductCard";
 import { connectDB, Product as ProductModel } from "../../lib/db";
+import { CollectionSkeleton } from "../../components/SkeletonLoaders";
 
 export const dynamic = "force-dynamic";
 
@@ -240,13 +241,7 @@ export default function CollectionPage({ params }: PageProps) {
 
       {/* 3. Main Collection Content wrapped in Suspense */}
       <main className="flex-1">
-        <Suspense
-          fallback={
-            <div className="py-24 text-center font-serif text-[#777777]">
-              Loading collection...
-            </div>
-          }
-        >
+        <Suspense fallback={<CollectionSkeleton />}>
           <CollectionContent params={params} />
         </Suspense>
       </main>

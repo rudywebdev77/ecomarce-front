@@ -13,6 +13,7 @@ import WhatsAppButton from "../../components/WhatsAppButton";
 import ProductDetailClient from "./ProductDetailClient";
 import { API_BASE } from "../../lib/api";
 import { connectDB, Product } from "../../lib/db";
+import { ProductDetailSkeleton } from "../../components/SkeletonLoaders";
 
 export const dynamic = "force-dynamic";
 
@@ -390,13 +391,7 @@ export default function ProductPage({
 
       {/* 3. Main Product Details View wrapped in Suspense */}
       <main className="flex-1">
-        <Suspense
-          fallback={
-            <div className="py-24 text-center font-serif text-[#777777]">
-              Loading product details...
-            </div>
-          }
-        >
+        <Suspense fallback={<ProductDetailSkeleton />}>
           <ProductContent params={params} />
         </Suspense>
       </main>
