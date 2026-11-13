@@ -40,6 +40,7 @@ export default function Home() {
             link={coll1.link}
             products={coll1.products.slice(0, 8)}
             showViewAll={false}
+            showSaleBadge={false}
           />
         )}
 

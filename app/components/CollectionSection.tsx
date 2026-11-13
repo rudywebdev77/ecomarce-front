@@ -26,11 +26,18 @@ interface CollectionSectionProps {
   products: Product[];
   showViewAll?: boolean;
   viewAllTextColor?: "red" | "white";
+  showSaleBadge?: boolean;
 }
 
 const HOVER_CYCLE_MS = 1100;
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({
+  product,
+  showSaleBadge = false,
+}: {
+  product: Product;
+  showSaleBadge?: boolean;
+}) {
   const { currentCurrency } = useStore();
 
   const numCompare = product.comparePrice
@@ -111,7 +118,7 @@ function ProductCard({ product }: { product: Product }) {
         onMouseLeave={handleLeave}
       >
         {/* Product Badges */}
-        {hasComparePrice && (
+        {showSaleBadge && hasComparePrice && (
           <span className="absolute top-2 left-2 bg-[#111111] text-white text-[11px] font-normal tracking-wide px-2 py-0.5 z-[3] uppercase">
             Sale
           </span>
@@ -180,6 +187,7 @@ export default function CollectionSection({
   products,
   showViewAll = false,
   viewAllTextColor = "white",
+  showSaleBadge = false,
 }: CollectionSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollRatio, setScrollRatio] = useState(0);
@@ -206,7 +214,11 @@ export default function CollectionSection({
         {/* 1. Desktop & Laptop Layout (>= 769px): 4 columns grid */}
         <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-[17px]">
           {products.map((product) => (
-            <ProductCard key={product.handle || product.title} product={product} />
+            <ProductCard
+              key={product.handle || product.title}
+              product={product}
+              showSaleBadge={showSaleBadge}
+            />
           ))}
         </div>
 
@@ -224,7 +236,7 @@ export default function CollectionSection({
                   key={product.handle || product.title}
                   className="w-[39vw] min-w-[145px] max-w-[210px] shrink-0"
                 >
-                  <ProductCard product={product} />
+                  <ProductCard product={product} showSaleBadge={showSaleBadge} />
                 </div>
               ))}
 
