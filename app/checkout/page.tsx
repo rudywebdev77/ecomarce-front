@@ -292,6 +292,20 @@ export default function CheckoutPage() {
 
           const form = checkout.createForm({
             layout: "expanded",
+            wallets: {
+              paymentMethods: {
+                link: "never",
+                applePay: "never",
+                googlePay: "never",
+              },
+            },
+            expressCheckout: {
+              paymentMethods: {
+                link: "never",
+                applePay: "never",
+                googlePay: "never",
+              },
+            },
           });
 
           // Prevent unhandled error
